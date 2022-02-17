@@ -1,2 +1,4 @@
 # elasticms-client
-command client of the elasticms suite
+
+This is a command client to interact with and elasticms admin with some helper commands.
+
