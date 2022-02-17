@@ -15,6 +15,9 @@
         "symfony/yaml": "5.4.*"
     },
     "require-dev": {
+      "friendsofphp/php-cs-fixer": "^3.0",
+      "phpstan/phpstan": "^0.12",
+      "phpunit/phpunit": "^7.1"
     },
     "config": {
         "allow-plugins": {
@@ -53,7 +56,11 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
-        ]
+        ],
+      "phpcs": "php-cs-fixer fix",
+      "phpstan": "phpstan analyse",
+      "phpunit": "phpunit",
+      "phpall": "phpunit && php-cs-fixer fix && phpstan analyse"
     },
     "conflict": {
         "symfony/symfony": "*"
