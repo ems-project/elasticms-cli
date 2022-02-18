@@ -121,6 +121,9 @@
     "guzzlehttp/streams": {
         "version": "3.0.0"
     },
+    "kevinrob/guzzle-cache-middleware": {
+        "version": "v4.0.0"
+    },
     "maennchen/zipstream-php": {
         "version": "2.1.0"
     },
@@ -311,6 +314,9 @@
         "files": [
             "./bin/console"
         ]
+    },
+    "symfony/css-selector": {
+        "version": "v5.4.3"
     },
     "symfony/dependency-injection": {
         "version": "v5.4.3"
