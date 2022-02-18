@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Client\WebToElasticms\Config;
 
-use App\Client\WebToElasticms\Cache\CacheManager;
+use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Client\WebToElasticms\Rapport\Rapport;
 use EMS\CommonBundle\Common\CoreApi\CoreApi;

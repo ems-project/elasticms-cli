@@ -2,7 +2,7 @@
 
 namespace App\Client\WebToElasticms\Rapport;
 
-use App\Client\WebToElasticms\Cache\CacheManager;
+use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Config\Document;
 use App\Client\WebToElasticms\Config\Extractor;
 use App\Client\WebToElasticms\Config\WebResource;

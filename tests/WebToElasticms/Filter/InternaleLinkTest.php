@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\WebToElasticms\Filter;
 
-use App\Client\WebToElasticms\Cache\CacheManager;
+use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Config\ConfigManager;
 use App\Client\WebToElasticms\Config\WebResource;
 use App\Client\WebToElasticms\Filter\Html\InternalLink;

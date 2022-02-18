@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Client\WebToElasticms\Extract;
 
-use App\Client\WebToElasticms\Cache\CacheManager;
+use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Config\Computer;
 use App\Client\WebToElasticms\Config\ConfigManager;
 use App\Client\WebToElasticms\Config\WebResource;
