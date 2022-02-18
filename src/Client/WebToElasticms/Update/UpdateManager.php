@@ -6,19 +6,19 @@ namespace App\Client\WebToElasticms\Update;
 
 use App\Client\WebToElasticms\Config\ConfigManager;
 use App\Client\WebToElasticms\Extract\ExtractedData;
-use EMS\CommonBundle\Common\CoreApi\CoreApi;
 use EMS\CommonBundle\Common\Standard\Json;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiExceptionInterface;
+use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use Psr\Log\LoggerInterface;
 
 class UpdateManager
 {
-    private CoreApi $coreApi;
+    private CoreApiInterface $coreApi;
     private ConfigManager $configManager;
     private LoggerInterface $logger;
     private bool $dryRun;
 
-    public function __construct(CoreApi $coreApi, ConfigManager $configManager, LoggerInterface $logger, bool $dryRun)
+    public function __construct(CoreApiInterface $coreApi, ConfigManager $configManager, LoggerInterface $logger, bool $dryRun)
     {
         $this->coreApi = $coreApi;
         $this->configManager = $configManager;

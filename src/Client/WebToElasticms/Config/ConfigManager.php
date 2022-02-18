@@ -7,7 +7,7 @@ namespace App\Client\WebToElasticms\Config;
 use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Client\WebToElasticms\Rapport\Rapport;
-use EMS\CommonBundle\Common\CoreApi\CoreApi;
+use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use EMS\CommonBundle\Helper\EmsFields;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ExpressionLanguage;
@@ -42,7 +42,7 @@ class ConfigManager
     /** @var string[] */
     private $linkToClean = [];
     private CacheManager $cacheManager;
-    private CoreApi $coreApi;
+    private CoreApiInterface $coreApi;
     private LoggerInterface $logger;
     private ?ExpressionLanguage $expressionLanguage = null;
     private string $hashResourcesField = 'import_hash_resources';
@@ -61,7 +61,7 @@ class ConfigManager
         return self::getSerializer()->serialize($this, $format);
     }
 
-    public static function deserialize(string $data, CacheManager $cache, CoreApi $coreApi, LoggerInterface $logger, string $format = JsonEncoder::FORMAT): ConfigManager
+    public static function deserialize(string $data, CacheManager $cache, CoreApiInterface $coreApi, LoggerInterface $logger, string $format = JsonEncoder::FORMAT): ConfigManager
     {
         $config = self::getSerializer()->deserialize($data, ConfigManager::class, $format);
         if (!$config instanceof ConfigManager) {
@@ -176,6 +176,7 @@ class ConfigManager
         if (null === $path) {
             $path = $url->getPath();
             $rapport->addUrlNotFound($url);
+            $this->logger->notice(\sprintf('Internal url not found: %s', $url->getUrl()));
         }
 
         if (null !== $url->getFragment()) {
