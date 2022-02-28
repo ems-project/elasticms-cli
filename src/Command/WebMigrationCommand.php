@@ -20,8 +20,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class WebMigrationCommand extends AbstractCommand
 {
+    protected static $defaultName = 'emscli:web:migrate';
+
     private const ARG_CONFIG_FILE_PATH = 'json-path';
-    private const OPTION_HASH_ALGO = 'hash-algo';
     private const OPTION_CONTINUE = 'continue';
     private const ARG_OUUID = 'OUUID';
     public const OPTION_CACHE_FOLDER = 'cache-folder';
@@ -29,7 +30,6 @@ class WebMigrationCommand extends AbstractCommand
     public const OPTION_DRY_RUN = 'dry-run';
     public const OPTION_DUMP = 'dump';
     public const OPTION_RAPPORTS_FOLDER = 'rapports-folder';
-    protected static $defaultName = 'ems:migrate';
     private ConsoleLogger $logger;
     private string $jsonPath;
     private string $cacheFolder;
@@ -57,13 +57,6 @@ class WebMigrationCommand extends AbstractCommand
                 'Path to an config file (JSON) see documentation'
             )
             ->addOption(
-                self::OPTION_HASH_ALGO,
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'Algorithm used to hash assets',
-                'sha1'
-            )
-            ->addOption(
                 self::OPTION_CONTINUE,
                 null,
                 InputOption::VALUE_NONE,
@@ -74,7 +67,7 @@ class WebMigrationCommand extends AbstractCommand
             ->addOption(self::OPTION_DRY_RUN, null, InputOption::VALUE_NONE, 'don\'t update elasticms')
             ->addOption(self::OPTION_DUMP, null, InputOption::VALUE_NONE, 'dump computed arrays')
             ->addOption(self::OPTION_RAPPORTS_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where rapports stored', \getcwd())
-            ->addOption(self::OPTION_CACHE_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where cache will stored', \implode(DIRECTORY_SEPARATOR, [\sys_get_temp_dir(), 'WebToElasticms']));
+            ->addOption(self::OPTION_CACHE_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where cache will stored', \implode(DIRECTORY_SEPARATOR, [\getcwd(), 'cache']));
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output): void
@@ -93,7 +86,6 @@ class WebMigrationCommand extends AbstractCommand
         $this->dump = $this->getOptionBool(self::OPTION_DUMP);
         $this->cacheFolder = $this->getOptionString(self::OPTION_CACHE_FOLDER);
         $this->rapportsFolder = $this->getOptionString(self::OPTION_RAPPORTS_FOLDER);
-        $hash = $this->getOptionString(self::OPTION_HASH_ALGO);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
