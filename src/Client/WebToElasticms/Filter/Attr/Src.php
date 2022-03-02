@@ -25,7 +25,7 @@ class Src
     /**
      * @return array{filename: string, filesize: int|null, mimetype: string, sha1: string}|array{}
      */
-    public function process(string $href)
+    public function process(string $href): array
     {
         $url = new Url($href, $this->currentUrl);
 
