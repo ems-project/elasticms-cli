@@ -50,6 +50,8 @@ class ConfigManager
     private ?string $ignoreResourceLinkPattern = null;
     /** @var string[] */
     private array $linksByUrl = [];
+    /** @var string[] */
+    private $cleanTags = [];
     /**
      * @var array<string, string[]>
      */
@@ -403,6 +405,22 @@ class ConfigManager
     public function setLinksByUrl(array $linksByUrl): void
     {
         $this->linksByUrl = $linksByUrl;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getCleanTags(): array
+    {
+        return $this->cleanTags;
+    }
+
+    /**
+     * @param string[] $cleanTags
+     */
+    public function setCleanTags(array $cleanTags): void
+    {
+        $this->cleanTags = $cleanTags;
     }
 
     /**
