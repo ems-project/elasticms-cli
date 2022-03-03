@@ -51,7 +51,7 @@ class ConfigManager
     /** @var string[] */
     private array $linksByUrl = [];
     /** @var string[] */
-    private $cleanTags = ["h1"];
+    private $cleanTags = ['h1'];
     /**
      * @var array<string, string[]>
      */
