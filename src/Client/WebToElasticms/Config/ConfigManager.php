@@ -50,6 +50,8 @@ class ConfigManager
     private ?string $ignoreResourceLinkPattern = null;
     /** @var string[] */
     private array $linksByUrl = [];
+    /** @var string[] */
+    private array $datalinksByUrl = [];
     /**
      * @var array<string, string[]>
      */
@@ -187,6 +189,17 @@ class ConfigManager
         }
 
         return $path;
+    }
+
+    public function findDataLink(string $path, Rapport $rapport, string $currentUrl): ?string
+    {
+        if (isset($this->datalinksByUrl[$path])) {
+            return $this->datalinksByUrl[$path];
+        }
+
+        $rapport->inDataLinkNotFounds($path, $currentUrl);
+
+        return null;
     }
 
     /**
@@ -403,6 +416,22 @@ class ConfigManager
     public function setLinksByUrl(array $linksByUrl): void
     {
         $this->linksByUrl = $linksByUrl;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getDataLinksByUrl(): array
+    {
+        return $this->datalinksByUrl;
+    }
+
+    /**
+     * @param string[] $datalinksByUrl
+     */
+    public function setDataLinksByUrl(array $datalinksByUrl): void
+    {
+        $this->datalinksByUrl = $datalinksByUrl;
     }
 
     /**
