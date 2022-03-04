@@ -23,6 +23,8 @@ class Rapport
     private array $extractErrors = [['Type', 'URL', 'Locale', 'Selector', 'Strategy', 'Property', 'Attribute', 'Count']];
     /** @var string[][] */
     private array $urlsInError = [['Doc\'s URLs', 'URLs', 'Code', 'Message']];
+    /** @var string[][] */
+    private array $dataLinksInError = [['Path', 'Referrers']];
     private string $filename;
     private SpreadsheetGeneratorService $spreadsheetGeneratorService;
     private CacheManager $cacheManager;
@@ -57,6 +59,10 @@ class Rapport
                     'name' => 'Nothing extracted',
                     'rows' => \array_values($this->nothingExtracted),
                 ],
+                [
+                    'name' => 'DataLinks error',
+                    'rows' => \array_values($this->dataLinksInError),
+                ],
             ],
         ];
         $this->spreadsheetGeneratorService->generateSpreadsheetFile($config, $this->filename);
@@ -70,6 +76,11 @@ class Rapport
         $this->missingInternalUrls[$url->getPath()][] = $url->getReferer();
 
         return true;
+    }
+
+    public function inDataLinkNotFounds(string $path, string $currentUrl): void
+    {
+        $this->dataLinksInError[] = [$path, $currentUrl];
     }
 
     public function addUrlNotFound(Url $url): void

@@ -9,6 +9,7 @@ use App\Client\WebToElasticms\Config\Analyzer;
 use App\Client\WebToElasticms\Config\ConfigManager;
 use App\Client\WebToElasticms\Config\Document;
 use App\Client\WebToElasticms\Config\WebResource;
+use App\Client\WebToElasticms\Filter\Attr\DataLink;
 use App\Client\WebToElasticms\Filter\Attr\Src;
 use App\Client\WebToElasticms\Filter\Html\ClassCleaner;
 use App\Client\WebToElasticms\Filter\Html\InternalLink;
@@ -54,7 +55,7 @@ class Html
                 if (null !== $attribute) {
                     $attributeValue = $item->attr($attribute);
                     if (null !== $attributeValue) {
-                        $basket[] = $this->applyAttrFilters($resource, $attributeValue, $extractor);
+                        $basket[] = $this->applyAttrFilters($resource, $attributeValue, $extractor, $this->rapport);
                     }
                 } else {
                     $basket[] = $this->applyFilters($resource, $item, $extractor, $this->rapport);
@@ -141,7 +142,7 @@ class Html
     /**
      * @return mixed
      */
-    private function applyAttrFilters(WebResource $resource, string $content, \App\Client\WebToElasticms\Config\Extractor $extractor)
+    private function applyAttrFilters(WebResource $resource, string $content, \App\Client\WebToElasticms\Config\Extractor $extractor, Rapport $rapport)
     {
         foreach ($extractor->getFilters() as $filterType) {
             switch ($filterType) {
@@ -150,6 +151,13 @@ class Html
                         throw new \RuntimeException(\sprintf('Unexpected non string content for filter %s', Src::TYPE));
                     }
                     $filter = new Src($this->logger, $this->config, $resource->getUrl());
+                    $content = $filter->process($content);
+                    break;
+                case DataLink::TYPE:
+                    if (!\is_string($content)) {
+                        throw new \RuntimeException(\sprintf('Unexpected non string content for filter %s', DataLink::TYPE));
+                    }
+                    $filter = new DataLink($this->config, $resource->getUrl(), $rapport);
                     $content = $filter->process($content);
                     break;
                 default:
