@@ -20,15 +20,13 @@ class TagCleaner implements HtmlInterface
 
     public function process(WebResource $resource, Crawler $content): void
     {
-        foreach ($this->config->getCleanTags() as $cleanTag) {
-            foreach ($content->filter($cleanTag) as $item) {
-                if (!$item instanceof \DOMElement) {
-                    throw new \RuntimeException('Unexpected non DOMElement object');
-                }
+        foreach ($content->filter(\implode(', ', $this->config->getCleanTags())) as $item) {
+            if (!$item instanceof \DOMElement) {
+                continue;
+            }
 
-                if ($item->parentNode instanceof \DOMElement) {
-                    $item->parentNode->removeChild($item);
-                }
+            if ($item->parentNode instanceof \DOMElement) {
+                $item->parentNode->removeChild($item);
             }
         }
     }
