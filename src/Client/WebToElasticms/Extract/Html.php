@@ -43,7 +43,9 @@ class Html
      */
     public function extractData(WebResource $resource, HttpResult $result, Analyzer $analyzer, array &$data): void
     {
-        $crawler = new Crawler($result->getResponse()->getBody()->getContents());
+        $stream = $result->getResponse()->getBody();
+        $stream->rewind();
+        $crawler = new Crawler($stream->getContents());
         $this->autoDiscoverResources($crawler, $resource);
         foreach ($analyzer->getExtractors() as $extractor) {
             $content = $crawler->filter($extractor->getSelector());
