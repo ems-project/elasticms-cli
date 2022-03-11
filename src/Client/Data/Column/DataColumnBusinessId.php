@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Client\Update\Config\Column;
+namespace App\Client\Data\Column;
 
-use App\Client\Update\UpdateData;
+use App\Client\Data\Data;
 use Elastica\Query\BoolQuery;
 use Elastica\Query\Exists;
 use EMS\CommonBundle\Common\CoreApi\Search\Scroll;
@@ -12,7 +12,7 @@ use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use EMS\CommonBundle\Search\Search;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-final class UpdateConfigColumnBusinessId extends UpdateConfigColumn
+final class DataColumnBusinessId extends DataColumn
 {
     public string $field;
     public string $contentType;
@@ -42,10 +42,10 @@ final class UpdateConfigColumnBusinessId extends UpdateConfigColumn
         return $optionsResolver;
     }
 
-    public function transform(UpdateData $updateData, TransformContext $transformContext): void
+    public function transform(Data $data, TransformContext $transformContext): void
     {
         $io = $transformContext->io;
-        $io->section(\vsprintf('Transforming businessId for %s (column index: %d)', [
+        $io->writeln(\vsprintf('Transforming businessId “%s” for column index %d', [
             $this->contentType,
             $this->columnIndex,
         ]));
@@ -55,7 +55,7 @@ final class UpdateConfigColumnBusinessId extends UpdateConfigColumn
 
         foreach ($scroll as $result) {
             if ($businessId = $result->getEMSSource()->get($this->field)) {
-                $updateData->searchAndReplace($this->columnIndex, $businessId, $result->getEmsId());
+                $data->searchAndReplace($this->columnIndex, $businessId, $result->getEmsId());
             }
             $progressScroll->advance();
         }

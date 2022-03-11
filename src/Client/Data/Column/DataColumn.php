@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace App\Client\Update\Config\Column;
+namespace App\Client\Data\Column;
 
-use App\Client\Update\UpdateData;
+use App\Client\Data\Data;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-abstract class UpdateConfigColumn
+abstract class DataColumn
 {
     public int $columnIndex;
 
     public const TYPES = [
-        'businessId' => UpdateConfigColumnBusinessId::class,
+        'businessId' => DataColumnBusinessId::class,
     ];
 
     public function __construct(int $index)
@@ -20,7 +20,7 @@ abstract class UpdateConfigColumn
         $this->columnIndex = $index;
     }
 
-    public function transform(UpdateData $updateData, TransformContext $transformContext): void
+    public function transform(Data $data, TransformContext $transformContext): void
     {
     }
 

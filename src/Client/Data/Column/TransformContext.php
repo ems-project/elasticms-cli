@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Client\Update\Config\Column;
+namespace App\Client\Data\Column;
 
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
