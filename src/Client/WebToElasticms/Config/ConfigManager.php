@@ -50,7 +50,7 @@ class ConfigManager
     private ?string $ignoreResourceLinkPattern = null;
     /** @var string[] */
     private array $linksByUrl = [];
-    /** @var string[] */
+    /** @var array<string, string[]> */
     private array $datalinksByUrl = [];
     /** @var string[] */
     private $cleanTags = ['h1'];
@@ -193,15 +193,20 @@ class ConfigManager
         return $path;
     }
 
-    public function findDataLink(string $path, Rapport $rapport, string $currentUrl): ?string
+    public function findDataLink(string $path, Rapport $rapport, string $currentUrl, string $type = ''): string
     {
-        if (isset($this->datalinksByUrl[$path])) {
-            return $this->datalinksByUrl[$path];
+        if (!empty($type) && isset($this->datalinksByUrl[$type][$path])) {
+            return $this->datalinksByUrl[$type][$path];
+        }
+
+        $url = new Url($path, $currentUrl);
+        if (null !== $this->findObjectIdInDocuments($url)) {
+            return $this->findObjectIdInDocuments($url);
         }
 
         $rapport->inDataLinkNotFounds($path, $currentUrl);
 
-        return null;
+        return '';
     }
 
     /**
@@ -228,6 +233,21 @@ class ConfigManager
                 $resourceUrl = new Url($resource->getUrl());
                 if ($resourceUrl->getPath() === $url->getPath()) {
                     return \sprintf('ems://object:%s:%s', $document->getType(), $ouuid);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function findObjectIdInDocuments(Url $url): ?string
+    {
+        foreach ($this->documents as $document) {
+            $ouuid = $document->getOuuid();
+            foreach ($document->getResources() as $resource) {
+                $resourceUrl = new Url($resource->getUrl());
+                if ($resourceUrl->getPath() === $url->getPath()) {
+                    return \sprintf('%s:%s', $document->getType(), $ouuid);
                 }
             }
         }
@@ -421,7 +441,7 @@ class ConfigManager
     }
 
     /**
-     * @return string[]
+     * @return array<string, string[]>
      */
     public function getDataLinksByUrl(): array
     {
@@ -429,7 +449,7 @@ class ConfigManager
     }
 
     /**
-     * @param string[] $datalinksByUrl
+     * @param array<string, string[]> $datalinksByUrl
      */
     public function setDataLinksByUrl(array $datalinksByUrl): void
     {
