@@ -15,6 +15,7 @@ use App\Client\WebToElasticms\Filter\Html\ClassCleaner;
 use App\Client\WebToElasticms\Filter\Html\InternalLink;
 use App\Client\WebToElasticms\Filter\Html\Striptag;
 use App\Client\WebToElasticms\Filter\Html\StyleCleaner;
+use App\Client\WebToElasticms\Filter\Html\TagCleaner;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Client\WebToElasticms\Rapport\Rapport;
 use Psr\Log\LoggerInterface;
@@ -125,6 +126,9 @@ class Html
                     break;
                 case ClassCleaner::TYPE:
                     $filter = new ClassCleaner($this->config);
+                    break;
+                case TagCleaner::TYPE:
+                    $filter = new TagCleaner($this->config);
                     break;
                 default:
                     throw new \RuntimeException(\sprintf('Unexpected %s filter', $filterType));

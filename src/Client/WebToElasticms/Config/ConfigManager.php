@@ -52,6 +52,8 @@ class ConfigManager
     private array $linksByUrl = [];
     /** @var string[] */
     private array $datalinksByUrl = [];
+    /** @var string[] */
+    private $cleanTags = ['h1'];
     /**
      * @var array<string, string[]>
      */
@@ -432,6 +434,22 @@ class ConfigManager
     public function setDataLinksByUrl(array $datalinksByUrl): void
     {
         $this->datalinksByUrl = $datalinksByUrl;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getCleanTags(): array
+    {
+        return $this->cleanTags;
+    }
+
+    /**
+     * @param string[] $cleanTags
+     */
+    public function setCleanTags(array $cleanTags): void
+    {
+        $this->cleanTags = $cleanTags;
     }
 
     /**
