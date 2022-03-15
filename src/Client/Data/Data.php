@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Client\Data;
 
-use App\Client\Data\Column\DataColumn;
-
 /**
  * @implements \IteratorAggregate<array<mixed>>
  */
