@@ -44,6 +44,8 @@ final class DataColumnBusinessId extends DataColumn
 
     public function transform(Data $data, TransformContext $transformContext): void
     {
+        parent::transform($data, $transformContext);
+
         $io = $transformContext->io;
         $io->writeln(\vsprintf('Transforming businessId “%s” for column index %d', [
             $this->contentType,

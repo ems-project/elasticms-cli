@@ -1,0 +1,25 @@
+{
+  "update": {
+    "contentType": "product",
+    "indexEmsId": 0,
+    "mapping": [
+      { "field": "cpv", "indexDataColumn": 4 }
+    ]
+  },
+  "dataColumns": [
+    {
+      "index": 0,
+      "type": "businessId",
+      "field": "code",
+      "contentType": "product",
+      "scrollSize": 2000
+    },
+    {
+      "index": 4,
+      "type": "businessId",
+      "field": "code",
+      "contentType": "cpv",
+      "scrollSize": 2000
+    }
+  ]
+}

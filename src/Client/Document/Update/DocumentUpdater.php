@@ -7,7 +7,6 @@ namespace App\Client\Document\Update;
 use App\Client\Data\Column\TransformContext;
 use App\Client\Data\Data;
 use EMS\CommonBundle\Common\EMSLink;
-use EMS\CommonBundle\Common\Standard\Json;
 use EMS\CommonBundle\Common\Standard\Type;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -53,7 +52,7 @@ final class DocumentUpdater
                 $rawData = $this->getRawDataFromRow($row);
                 $dataApi->save($ouuid, $rawData);
             } catch (\Throwable $e) {
-                $this->io->error(sprintf('Error in row %d', $i));
+                $this->io->error(\sprintf('Error in row %d', $i));
                 $this->io->error($e->getMessage());
             }
 
@@ -63,6 +62,9 @@ final class DocumentUpdater
         return $this;
     }
 
+    /**
+     * @param array<mixed> $row
+     */
     private function getOuuidFromRow(array $row): string
     {
         $updateIndexEmsId = $this->config->updateIndexEmsId;
@@ -70,7 +72,7 @@ final class DocumentUpdater
         $emsId = $row[$updateIndexEmsId] ?? null;
 
         if (null === $emsId) {
-            throw new \RuntimeException(sprintf('Row does not contain emsId in column [%d]', $updateIndexEmsId));
+            throw new \RuntimeException(\sprintf('Row does not contain emsId in column [%d]', $updateIndexEmsId));
         }
 
         $emsId = Type::string($emsId);
@@ -78,22 +80,27 @@ final class DocumentUpdater
         return EMSLink::fromText($emsId)->getOuuid();
     }
 
+    /**
+     * @param array<mixed> $row
+     *
+     * @return array<mixed>
+     */
     private function getRawDataFromRow(array $row): array
     {
         $updateMapping = $this->config->updateMapping;
 
         $rawData = [];
         foreach ($updateMapping as $updateMap) {
-            $updateValue = $row[$updateMap->dataColumnIndex] ?? null;
+            $updateValue = $row[$updateMap->indexDataColumn] ?? null;
 
             if (null === $updateValue) {
-                throw new \RuntimeException('Row does not contain update value in column [%d]', $updateMap->dataColumnIndex);
+                throw new \RuntimeException('Row does not contain update value in column [%d]', $updateMap->indexDataColumn);
             }
 
             $rawData[$updateMap->field] = $updateValue;
         }
 
-        if (\count($rawData) === 0) {
+        if (0 === \count($rawData)) {
             throw new \RuntimeException('No update found!');
         }
 

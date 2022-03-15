@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Client\Data;
 
+use App\Client\Data\Column\DataColumn;
+
 /**
  * @implements \IteratorAggregate<array<mixed>>
  */
-final class Data implements \Countable, \IteratorAggregate
+class Data implements \Countable, \IteratorAggregate
 {
     /** @var array<mixed> */
     private array $data;
@@ -20,11 +22,9 @@ final class Data implements \Countable, \IteratorAggregate
         $this->data = $data;
     }
 
-    public function slice(?int $start = 0, ?int $until = null): void
+    public function slice(?int $offset, ?int $length = null): void
     {
-        $offset = ($start ??= 0);
-        $length = $until - $start;
-        $this->data = \array_slice($this->data, $offset, $length);
+        $this->data = \array_slice($this->data, $offset ?? 0, $length);
     }
 
     /**

@@ -7,7 +7,7 @@ namespace App\Client\Data\Column;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-final class TransformContext
+class TransformContext
 {
     public CoreApiInterface $coreApi;
     public SymfonyStyle $io;

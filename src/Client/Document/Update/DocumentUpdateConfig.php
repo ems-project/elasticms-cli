@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Client\Document\Update;
 
 use App\Client\Data\Column\DataColumn;
+use EMS\CommonBundle\Common\Standard\Json;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -12,9 +13,6 @@ final class DocumentUpdateConfig
 {
     /** @var DataColumn[] */
     public array $dataColumns;
-
-    public ?int $dataFrom = null;
-    public ?int $dataUntil = null;
 
     public string $updateContentType;
     public int $updateIndexEmsId;
@@ -32,9 +30,24 @@ final class DocumentUpdateConfig
 
         $this->dataColumns = $config['dataColumns'];
 
-        $this->updateContentType = strval($config['update']['contentType']);
-        $this->updateIndexEmsId = intval($config['update']['indexEmsId']);
+        $this->updateContentType = \strval($config['update']['contentType']);
+        $this->updateIndexEmsId = \intval($config['update']['indexEmsId']);
         $this->updateMapping = $config['update']['mapping'];
+    }
+
+    public static function fromFile(string $filename): self
+    {
+        try {
+            $fileContent = \file_get_contents($filename);
+        } catch (\Throwable $e) {
+            $fileContent = false;
+        }
+
+        if (false === $fileContent) {
+            throw new \RuntimeException(\sprintf('Could not read config file from %s', $filename));
+        }
+
+        return new self(Json::decode($fileContent));
     }
 
     private function getOptionsResolver(): OptionsResolver
@@ -48,6 +61,8 @@ final class DocumentUpdateConfig
                 $updateResolver
                     ->setDefaults(['mapping' => []])
                     ->setRequired(['contentType', 'indexEmsId', 'mapping'])
+                    ->setAllowedTypes('contentType', 'string')
+                    ->setAllowedTypes('indexEmsId', 'int')
                     ->setNormalizer('mapping', function (Options $options, array $value) {
                         return \array_map(fn ($map) => new UpdateMap($map), $value);
                     })

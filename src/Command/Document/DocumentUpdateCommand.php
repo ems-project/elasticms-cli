@@ -20,14 +20,19 @@ final class DocumentUpdateCommand extends AbstractCommand
     private AdminHelper $adminHelper;
     private FileReaderInterface $fileReader;
 
-    private string $dataFilename;
-    private DocumentUpdateConfig $config;
+    private string $configFile;
+    private string $dataFilePath;
+
+    private int $dataOffset = 0;
+    private ?int $dataLength = null;
 
     protected static $defaultName = 'emscli:update:documents';
 
-    private const ARGUMENT_DATA_FILE = 'data-file';
-    private const OPTION_DATA_FROM = 'data-from';
-    private const OPTION_DATA_UNTIL = 'data-until';
+    private const ARGUMENT_DATA_FILE = 'data-file-path';
+    private const ARGUMENT_CONFIG_FILE = 'config-file-path';
+    private const OPTION_DATA_OFFSET = 'data-offset';
+    private const OPTION_DATA_LENGTH = 'data-length';
+    private const OPTION_SKIP_FIRST = 'skip-first';
 
     public function __construct(AdminHelper $adminHelper, FileReaderInterface $fileReader)
     {
@@ -39,44 +44,21 @@ final class DocumentUpdateCommand extends AbstractCommand
     protected function configure(): void
     {
         $this
+            ->addArgument(self::ARGUMENT_CONFIG_FILE, InputArgument::REQUIRED, 'Config file')
             ->addArgument(self::ARGUMENT_DATA_FILE, InputArgument::REQUIRED, 'Data file')
-            ->addOption(self::OPTION_DATA_FROM, null,InputOption::VALUE_REQUIRED, 'Start row in data')
-            ->addOption(self::OPTION_DATA_UNTIL, null,InputOption::VALUE_REQUIRED, 'End row in data')
+            ->addOption(self::OPTION_DATA_OFFSET, null, InputOption::VALUE_REQUIRED, 'Offset data', 0)
+            ->addOption(self::OPTION_DATA_LENGTH, null, InputOption::VALUE_REQUIRED, 'Length data to parse')
         ;
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         parent::initialize($input, $output);
-        $this->dataFilename = $this->getArgumentString(self::ARGUMENT_DATA_FILE);
-        $this->config = new DocumentUpdateConfig([
-            'update' => [
-                'contentType' => 'product',
-                'indexEmsId' => 0,
-                'mapping' => [
-                    ['field' => 'cpv', 'indexDataColumn' => 4]
-                ]
-            ],
-            'dataColumns' => [
-                [
-                    'index' => 0,
-                    'type' => 'businessId',
-                    'field' => 'code',
-                    'contentType' => 'product',
-                    'scrollSize' => 2000,
-                ],
-                [
-                    'index' => 4,
-                    'type' => 'businessId',
-                    'field' => 'code',
-                    'contentType' => 'cpv',
-                    'scrollSize' => 2000,
-                ],
-            ],
-        ]);
+        $this->configFile = $this->getArgumentString(self::ARGUMENT_CONFIG_FILE);
+        $this->dataFilePath = $this->getArgumentString(self::ARGUMENT_DATA_FILE);
 
-        $this->config->dataFrom = $this->getOptionIntNull(self::OPTION_DATA_FROM);
-        $this->config->dataUntil = $this->getOptionIntNull(self::OPTION_DATA_UNTIL);
+        $this->dataOffset = $this->getOptionInt(self::OPTION_DATA_OFFSET);
+        $this->dataLength = $this->getOptionIntNull(self::OPTION_DATA_LENGTH);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -90,22 +72,23 @@ final class DocumentUpdateCommand extends AbstractCommand
             return self::EXECUTE_ERROR;
         }
 
+        $config = DocumentUpdateConfig::fromFile($this->configFile);
+
         $this->io->section('Reading data');
-        $data = new Data($this->fileReader->getData($this->dataFilename, true));
+        $dataArray = $this->fileReader->getData($this->dataFilePath, true);
+
+        $data = new Data($dataArray);
         $this->io->writeln(\sprintf('Loaded data in memory: %d rows', \count($data)));
 
-        if ($this->config->dataFrom || $this->config->dataUntil) {
-            $data->slice($this->config->dataFrom, $this->config->dataUntil);
-            $this->io->writeln(\sprintf('Sliced data: %d rows (from %d - until %d)', \count($data), $this->config->dataFrom, $this->config->dataUntil));
+        if ($this->dataOffset || $this->dataLength) {
+            $data->slice($this->dataOffset, $this->dataLength);
+            $this->io->writeln(\sprintf('Sliced data: %d rows (start %d)', \count($data), $this->dataOffset));
         }
 
-
-
-        $documentUpdater = new DocumentUpdater($data, $this->config, $coreApi, $this->io);
+        $documentUpdater = new DocumentUpdater($data, $config, $coreApi, $this->io);
         $documentUpdater
             ->executeColumnTransformers()
             ->execute();
-
 
         return self::EXECUTE_SUCCESS;
     }
