@@ -8,6 +8,7 @@ use App\Client\Data\Data;
 use Elastica\Query\BoolQuery;
 use Elastica\Query\Exists;
 use EMS\CommonBundle\Common\CoreApi\Search\Scroll;
+use EMS\CommonBundle\Common\EMSLink;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use EMS\CommonBundle\Search\Search;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -17,6 +18,7 @@ final class DataColumnBusinessId extends DataColumn
     public string $field;
     public string $contentType;
     public int $scrollSize;
+    private bool $removeNotFound;
 
     /**
      * @param array<mixed> $config
@@ -30,6 +32,7 @@ final class DataColumnBusinessId extends DataColumn
         $this->field = $options['field'];
         $this->contentType = $options['contentType'];
         $this->scrollSize = $options['scrollSize'];
+        $this->removeNotFound = $options['removeNotFound'];
     }
 
     protected function getOptionsResolver(): OptionsResolver
@@ -37,7 +40,12 @@ final class DataColumnBusinessId extends DataColumn
         $optionsResolver = parent::getOptionsResolver();
         $optionsResolver
             ->setRequired(['field', 'contentType'])
-            ->setDefaults(['scrollSize' => 1000]);
+            ->setDefaults([
+                'scrollSize' => 1000,
+                'removeNotFound' => false,
+            ])
+            ->setAllowedTypes('removeNotFound', ['bool'])
+        ;
 
         return $optionsResolver;
     }
@@ -63,6 +71,11 @@ final class DataColumnBusinessId extends DataColumn
         }
 
         $progressScroll->finish();
+
+        if ($this->removeNotFound) {
+            $data->filter(fn (array $row) => EMSLink::fromText($row[$this->columnIndex])->isValid());
+        }
+
         $io->newLine(2);
     }
 

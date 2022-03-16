@@ -23,8 +23,9 @@ final class DocumentUpdateCommand extends AbstractCommand
     private string $configFile;
     private string $dataFilePath;
 
-    private int $dataOffset = 0;
+    private int $dataOffset;
     private ?int $dataLength = null;
+    private bool $dataSkipFirstRow;
 
     protected static $defaultName = 'emscli:update:documents';
 
@@ -32,7 +33,7 @@ final class DocumentUpdateCommand extends AbstractCommand
     private const ARGUMENT_CONFIG_FILE = 'config-file-path';
     private const OPTION_DATA_OFFSET = 'data-offset';
     private const OPTION_DATA_LENGTH = 'data-length';
-    private const OPTION_SKIP_FIRST = 'skip-first';
+    private const OPTION_DATA_SKIP_FIRST_ROW = 'data-skip-first';
 
     public function __construct(AdminHelper $adminHelper, FileReaderInterface $fileReader)
     {
@@ -48,6 +49,7 @@ final class DocumentUpdateCommand extends AbstractCommand
             ->addArgument(self::ARGUMENT_DATA_FILE, InputArgument::REQUIRED, 'Data file')
             ->addOption(self::OPTION_DATA_OFFSET, null, InputOption::VALUE_REQUIRED, 'Offset data', 0)
             ->addOption(self::OPTION_DATA_LENGTH, null, InputOption::VALUE_REQUIRED, 'Length data to parse')
+            ->addOption(self::OPTION_DATA_SKIP_FIRST_ROW, null, InputOption::VALUE_OPTIONAL, 'Skip data header', true)
         ;
     }
 
@@ -59,6 +61,7 @@ final class DocumentUpdateCommand extends AbstractCommand
 
         $this->dataOffset = $this->getOptionInt(self::OPTION_DATA_OFFSET);
         $this->dataLength = $this->getOptionIntNull(self::OPTION_DATA_LENGTH);
+        $this->dataSkipFirstRow = $this->getOptionBool(self::OPTION_DATA_SKIP_FIRST_ROW);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -75,7 +78,7 @@ final class DocumentUpdateCommand extends AbstractCommand
         $config = DocumentUpdateConfig::fromFile($this->configFile);
 
         $this->io->section('Reading data');
-        $dataArray = $this->fileReader->getData($this->dataFilePath, true);
+        $dataArray = $this->fileReader->getData($this->dataFilePath, $this->dataSkipFirstRow);
 
         $data = new Data($dataArray);
         $this->io->writeln(\sprintf('Loaded data in memory: %d rows', \count($data)));
@@ -88,7 +91,8 @@ final class DocumentUpdateCommand extends AbstractCommand
         $documentUpdater = new DocumentUpdater($data, $config, $coreApi, $this->io);
         $documentUpdater
             ->executeColumnTransformers()
-            ->execute();
+            ->execute()
+        ;
 
         return self::EXECUTE_SUCCESS;
     }

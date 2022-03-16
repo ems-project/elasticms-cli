@@ -9,6 +9,7 @@ use App\Client\Data\Data;
 use EMS\CommonBundle\Common\EMSLink;
 use EMS\CommonBundle\Common\Standard\Type;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
+use EMS\CommonBundle\Contracts\CoreApi\Endpoint\Data\DataInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class DocumentUpdater
@@ -50,10 +51,12 @@ final class DocumentUpdater
             try {
                 $ouuid = $this->getOuuidFromRow($row);
                 $rawData = $this->getRawDataFromRow($row);
-                $dataApi->save($ouuid, $rawData);
+                $dataApi->save($ouuid, $rawData, DataInterface::MODE_UPDATE, false);
             } catch (\Throwable $e) {
-                $this->io->error(\sprintf('Error in row %d', $i));
-                $this->io->error($e->getMessage());
+                $this->io->error(\sprintf('Error in row %d with ouuid %s', $i, ($ouuid ?? '??')));
+                if ($this->io->isDebug()) {
+                    $this->io->error($e->getMessage());
+                }
             }
 
             $dataProgress->advance();

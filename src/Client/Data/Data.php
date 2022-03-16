@@ -41,9 +41,14 @@ class Data implements \Countable, \IteratorAggregate
     public function searchAndReplace(int $columnIndex, string $search, string $replace): void
     {
         foreach ($this->data as &$row) {
-            if (isset($row[$columnIndex]) && $search === $row[$columnIndex]) {
+            if (isset($row[$columnIndex]) && $search === (string) $row[$columnIndex]) {
                 $row[$columnIndex] = $replace;
             }
         }
+    }
+
+    public function filter(callable $callback): void
+    {
+        $this->data = \array_filter($this->data, $callback);
     }
 }
