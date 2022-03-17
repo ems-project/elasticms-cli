@@ -27,10 +27,10 @@ final class DocumentUpdateCommand extends AbstractCommand
     private ?int $dataLength = null;
     private bool $dataSkipFirstRow;
 
-    protected static $defaultName = 'emscli:update:documents';
+    protected static $defaultName = 'emscli:documents:update';
 
-    private const ARGUMENT_DATA_FILE = 'data-file-path';
-    private const ARGUMENT_CONFIG_FILE = 'config-file-path';
+    private const ARGUMENT_DATA_FILE = 'data-file';
+    private const ARGUMENT_CONFIG_FILE = 'config-file';
     private const OPTION_DATA_OFFSET = 'data-offset';
     private const OPTION_DATA_LENGTH = 'data-length';
     private const OPTION_DATA_SKIP_FIRST_ROW = 'data-skip-first';
@@ -45,8 +45,9 @@ final class DocumentUpdateCommand extends AbstractCommand
     protected function configure(): void
     {
         $this
-            ->addArgument(self::ARGUMENT_CONFIG_FILE, InputArgument::REQUIRED, 'Config file')
-            ->addArgument(self::ARGUMENT_DATA_FILE, InputArgument::REQUIRED, 'Data file')
+            ->setDescription('Update documents form excel or csv with custom configuration')
+            ->addArgument(self::ARGUMENT_CONFIG_FILE, InputArgument::REQUIRED, 'Config file (json)')
+            ->addArgument(self::ARGUMENT_DATA_FILE, InputArgument::REQUIRED, 'Data file (excel or csv)')
             ->addOption(self::OPTION_DATA_OFFSET, null, InputOption::VALUE_REQUIRED, 'Offset data', 0)
             ->addOption(self::OPTION_DATA_LENGTH, null, InputOption::VALUE_REQUIRED, 'Length data to parse')
             ->addOption(self::OPTION_DATA_SKIP_FIRST_ROW, null, InputOption::VALUE_OPTIONAL, 'Skip data header', true)
