@@ -76,20 +76,25 @@ class Extractor
             $defaultData = $document->getDefaultData();
             $data = $defaultData;
             $withoutError = true;
+            $NoEmptyExtractor = true;
             foreach ($document->getResources() as $resource) {
                 $this->logger->notice(\sprintf('Start extracting from %s', $resource->getUrl()));
-                try {
-                    $this->extractDataFromResource($document, $resource, $data);
-                } catch (ClientException $e) {
-                    $rapport->addResourceInError($resource, new Url($resource->getUrl()), $e->getCode(), $e->getMessage());
-                    $withoutError = false;
-                } catch (RequestException $e) {
-                    $rapport->addResourceInError($resource, new Url($resource->getUrl()), $e->getCode(), $e->getMessage());
-                    $withoutError = false;
+                if (EmptyExtractor::TYPE === $this->config->getAnalyzer($resource->getType())->getType()) {
+                    $NoEmptyExtractor = false;
+                } else {
+                    try {
+                        $this->extractDataFromResource($document, $resource, $data);
+                    } catch (ClientException $e) {
+                        $rapport->addResourceInError($resource, new Url($resource->getUrl()), $e->getCode(), $e->getMessage());
+                        $withoutError = false;
+                    } catch (RequestException $e) {
+                        $rapport->addResourceInError($resource, new Url($resource->getUrl()), $e->getCode(), $e->getMessage());
+                        $withoutError = false;
+                    }
                 }
             }
 
-            if ($withoutError && $data === $defaultData) {
+            if ($withoutError && $data === $defaultData && $NoEmptyExtractor) {
                 $rapport->addNothingExtracted($document);
                 continue;
             }
