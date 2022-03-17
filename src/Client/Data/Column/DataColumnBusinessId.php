@@ -25,7 +25,7 @@ final class DataColumnBusinessId extends DataColumn
      */
     public function __construct(array $config)
     {
-        /** @var array{index: int, field: string, contentType: string, scrollSize: int} $options */
+        /** @var array{index: int, field: string, contentType: string, scrollSize: int, removeNotFound: bool} $options */
         $options = $this->getOptionsResolver()->resolve($config);
 
         parent::__construct($options['index']);
