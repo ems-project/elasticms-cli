@@ -43,7 +43,9 @@ class Html
      */
     public function extractData(WebResource $resource, HttpResult $result, Analyzer $analyzer, array &$data): void
     {
-        $crawler = new Crawler($result->getResponse()->getBody()->getContents());
+        $stream = $result->getResponse()->getBody();
+        $stream->rewind();
+        $crawler = new Crawler($stream->getContents());
         $this->autoDiscoverResources($crawler, $resource);
         foreach ($analyzer->getExtractors() as $extractor) {
             $content = $crawler->filter($extractor->getSelector());
@@ -113,27 +115,35 @@ class Html
     {
         $asHtml = true;
         foreach ($extractor->getFilters() as $filterType) {
-            switch ($filterType) {
-                case Striptag::TYPE:
-                    $filter = new Striptag($this->config);
-                    $asHtml = false;
-                    break;
-                case InternalLink::TYPE:
-                    $filter = new InternalLink($this->logger, $this->config, $rapport, $resource->getUrl());
-                    break;
-                case StyleCleaner::TYPE:
-                    $filter = new StyleCleaner($this->config);
-                    break;
-                case ClassCleaner::TYPE:
-                    $filter = new ClassCleaner($this->config);
-                    break;
-                case TagCleaner::TYPE:
-                    $filter = new TagCleaner($this->config);
-                    break;
-                default:
-                    throw new \RuntimeException(\sprintf('Unexpected %s filter', $filterType));
+            if (\str_starts_with($filterType, DataLink::TYPE)) {
+                $length = \strlen(DataLink::TYPE) < \strlen($filterType) ? \strlen(DataLink::TYPE) + 1 : \strlen(DataLink::TYPE);
+                $type = \substr($filterType, $length);
+                $filter = new \App\Client\WebToElasticms\Filter\Html\DataLink($this->config, $rapport);
+                $filter->process($resource, $content, $type);
+                $asHtml = false;
+            } else {
+                switch ($filterType) {
+                    case Striptag::TYPE:
+                        $filter = new Striptag($this->config);
+                        $asHtml = false;
+                        break;
+                    case InternalLink::TYPE:
+                        $filter = new InternalLink($this->logger, $this->config, $rapport, $resource->getUrl());
+                        break;
+                    case StyleCleaner::TYPE:
+                        $filter = new StyleCleaner($this->config);
+                        break;
+                    case ClassCleaner::TYPE:
+                        $filter = new ClassCleaner($this->config);
+                        break;
+                    case TagCleaner::TYPE:
+                        $filter = new TagCleaner($this->config);
+                        break;
+                    default:
+                        throw new \RuntimeException(\sprintf('Unexpected %s filter', $filterType));
+                }
+                $filter->process($resource, $content);
             }
-            $filter->process($resource, $content);
         }
 
         return $asHtml ? $content->html() : $content->text();
@@ -145,6 +155,12 @@ class Html
     private function applyAttrFilters(WebResource $resource, string $content, \App\Client\WebToElasticms\Config\Extractor $extractor, Rapport $rapport)
     {
         foreach ($extractor->getFilters() as $filterType) {
+            $type = '';
+            if (\str_starts_with($filterType, DataLink::TYPE)) {
+                $length = \strlen(DataLink::TYPE) < \strlen($filterType) ? \strlen(DataLink::TYPE) + 1 : \strlen(DataLink::TYPE);
+                $type = \substr($filterType, $length);
+                $filterType = DataLink::TYPE;
+            }
             switch ($filterType) {
                 case Src::TYPE:
                     if (!\is_string($content)) {
@@ -158,7 +174,7 @@ class Html
                         throw new \RuntimeException(\sprintf('Unexpected non string content for filter %s', DataLink::TYPE));
                     }
                     $filter = new DataLink($this->config, $resource->getUrl(), $rapport);
-                    $content = $filter->process($content);
+                    $content = $filter->process($content, $type);
                     break;
                 default:
                     throw new \RuntimeException(\sprintf('Unexpected %s filter', $filterType));
