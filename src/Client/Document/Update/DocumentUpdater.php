@@ -40,7 +40,7 @@ final class DocumentUpdater
         return $this;
     }
 
-    public function execute(): self
+    public function execute(bool $dryRun): self
     {
         $this->io->section('Executing update');
 
@@ -51,7 +51,9 @@ final class DocumentUpdater
             try {
                 $ouuid = $this->getOuuidFromRow($row);
                 $rawData = $this->getRawDataFromRow($row);
-                $dataApi->save($ouuid, $rawData, DataInterface::MODE_UPDATE, false);
+                if (!$dryRun) {
+                    $dataApi->save($ouuid, $rawData, DataInterface::MODE_UPDATE, false);
+                }
             } catch (\Throwable $e) {
                 $this->io->error(\sprintf('Error in row %d with ouuid %s', $i, ($ouuid ?? '??')));
                 if ($this->io->isDebug()) {

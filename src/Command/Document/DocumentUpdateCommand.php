@@ -26,6 +26,7 @@ final class DocumentUpdateCommand extends AbstractCommand
     private int $dataOffset;
     private ?int $dataLength = null;
     private bool $dataSkipFirstRow;
+    private bool $dryRun;
 
     protected static $defaultName = 'emscli:documents:update';
 
@@ -34,6 +35,7 @@ final class DocumentUpdateCommand extends AbstractCommand
     private const OPTION_DATA_OFFSET = 'data-offset';
     private const OPTION_DATA_LENGTH = 'data-length';
     private const OPTION_DATA_SKIP_FIRST_ROW = 'data-skip-first';
+    private const OPTION_DRY_RUN = 'dry-run';
 
     public function __construct(AdminHelper $adminHelper, FileReaderInterface $fileReader)
     {
@@ -51,6 +53,7 @@ final class DocumentUpdateCommand extends AbstractCommand
             ->addOption(self::OPTION_DATA_OFFSET, null, InputOption::VALUE_REQUIRED, 'Offset data', 0)
             ->addOption(self::OPTION_DATA_LENGTH, null, InputOption::VALUE_REQUIRED, 'Length data to parse')
             ->addOption(self::OPTION_DATA_SKIP_FIRST_ROW, null, InputOption::VALUE_OPTIONAL, 'Skip data header', true)
+            ->addOption(self::OPTION_DRY_RUN, null, InputOption::VALUE_OPTIONAL, 'Just do a dry run', true)
         ;
     }
 
@@ -63,6 +66,7 @@ final class DocumentUpdateCommand extends AbstractCommand
         $this->dataOffset = $this->getOptionInt(self::OPTION_DATA_OFFSET);
         $this->dataLength = $this->getOptionIntNull(self::OPTION_DATA_LENGTH);
         $this->dataSkipFirstRow = $this->getOptionBool(self::OPTION_DATA_SKIP_FIRST_ROW);
+        $this->dryRun = $this->getOptionBool(self::OPTION_DRY_RUN);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -92,7 +96,7 @@ final class DocumentUpdateCommand extends AbstractCommand
         $documentUpdater = new DocumentUpdater($data, $config, $coreApi, $this->io);
         $documentUpdater
             ->executeColumnTransformers()
-            ->execute()
+            ->execute($this->dryRun)
         ;
 
         return self::EXECUTE_SUCCESS;

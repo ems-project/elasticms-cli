@@ -79,6 +79,6 @@ final class DocumentUpdaterTest extends TestCase
                 ],
             ], ]);
 
-        (new DocumentUpdater($data, $config, $this->coreApi, $this->io))->execute();
+        (new DocumentUpdater($data, $config, $this->coreApi, $this->io))->execute(false);
     }
 }
