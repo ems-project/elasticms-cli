@@ -7,6 +7,7 @@ namespace App\Client\Document\Update;
 use App\Client\Data\Column\TransformContext;
 use App\Client\Data\Data;
 use EMS\CommonBundle\Common\EMSLink;
+use EMS\CommonBundle\Common\Standard\Json;
 use EMS\CommonBundle\Common\Standard\Type;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use EMS\CommonBundle\Contracts\CoreApi\Endpoint\Data\DataInterface;
@@ -51,6 +52,10 @@ final class DocumentUpdater
             try {
                 $ouuid = $this->getOuuidFromRow($row);
                 $rawData = $this->getRawDataFromRow($row);
+                if ($this->io->isVerbose()) {
+                    $this->io->note(sprintf('Update document %s', $ouuid));
+                    $this->io->note(Json::encode($rawData, true));
+                }
                 if (!$dryRun) {
                     $dataApi->save($ouuid, $rawData, DataInterface::MODE_UPDATE, false);
                 }
