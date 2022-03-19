@@ -119,7 +119,6 @@ final class DocumentUpdater
                 if (!$this->dryRun) {
                     $dataApi->save($ouuid, $rawData, DataInterface::MODE_UPDATE, false);
                 }
-                exit;
             } catch (\Throwable $e) {
                 $this->io->error(\sprintf('Error in row %d with ouuid %s', $i, ($ouuid ?? '??')));
                 if ($this->io->isDebug()) {
