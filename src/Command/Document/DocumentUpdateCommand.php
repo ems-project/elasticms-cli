@@ -53,7 +53,7 @@ final class DocumentUpdateCommand extends AbstractCommand
             ->addOption(self::OPTION_DATA_OFFSET, null, InputOption::VALUE_REQUIRED, 'Offset data', 0)
             ->addOption(self::OPTION_DATA_LENGTH, null, InputOption::VALUE_REQUIRED, 'Length data to parse')
             ->addOption(self::OPTION_DATA_SKIP_FIRST_ROW, null, InputOption::VALUE_OPTIONAL, 'Skip data header', true)
-            ->addOption(self::OPTION_DRY_RUN, null, InputOption::VALUE_OPTIONAL, 'Just do a dry run', true)
+            ->addOption(self::OPTION_DRY_RUN, null, InputOption::VALUE_NONE, 'Just do a dry run')
         ;
     }
 
