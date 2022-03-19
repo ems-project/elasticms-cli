@@ -93,10 +93,10 @@ final class DocumentUpdateCommand extends AbstractCommand
             $this->io->writeln(\sprintf('Sliced data: %d rows (start %d)', \count($data), $this->dataOffset));
         }
 
-        $documentUpdater = new DocumentUpdater($data, $config, $coreApi, $this->io);
+        $documentUpdater = new DocumentUpdater($data, $config, $coreApi, $this->io, $this->dryRun);
         $documentUpdater
             ->executeColumnTransformers()
-            ->execute($this->dryRun)
+            ->execute()
         ;
 
         return self::EXECUTE_SUCCESS;

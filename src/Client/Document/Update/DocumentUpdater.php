@@ -19,13 +19,15 @@ final class DocumentUpdater
     private DocumentUpdateConfig $config;
     private CoreApiInterface $coreApi;
     private SymfonyStyle $io;
+    private bool $dryRun;
 
-    public function __construct(Data $data, DocumentUpdateConfig $config, CoreApiInterface $coreApi, SymfonyStyle $io)
+    public function __construct(Data $data, DocumentUpdateConfig $config, CoreApiInterface $coreApi, SymfonyStyle $io, bool $dryRun)
     {
         $this->data = $data;
         $this->config = $config;
         $this->coreApi = $coreApi;
         $this->io = $io;
+        $this->dryRun = $dryRun;
     }
 
     public function executeColumnTransformers(): self
@@ -41,7 +43,7 @@ final class DocumentUpdater
         return $this;
     }
 
-    public function execute(bool $dryRun): self
+    public function execute(): self
     {
         $this->io->section('Executing update');
 
@@ -53,10 +55,10 @@ final class DocumentUpdater
                 $ouuid = $this->getOuuidFromRow($row);
                 $rawData = $this->getRawDataFromRow($row);
                 if ($this->io->isVerbose()) {
-                    $this->io->note(sprintf('Update document %s', $ouuid));
+                    $this->io->note(\sprintf('Update document %s', $ouuid));
                     $this->io->note(Json::encode($rawData, true));
                 }
-                if (!$dryRun) {
+                if (!$this->dryRun) {
                     $dataApi->save($ouuid, $rawData, DataInterface::MODE_UPDATE, false);
                 }
             } catch (\Throwable $e) {

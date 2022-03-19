@@ -44,7 +44,7 @@ final class DocumentUpdaterTest extends TestCase
         $config = new DocumentUpdateConfig(['update' => ['contentType' => 'test', 'indexEmsId' => 0]]);
         $config->dataColumns = [$mockColumn];
 
-        (new DocumentUpdater($data, $config, $this->coreApi, $this->io))->executeColumnTransformers();
+        (new DocumentUpdater($data, $config, $this->coreApi, $this->io, false))->executeColumnTransformers();
     }
 
     public function testExecute()
@@ -79,6 +79,6 @@ final class DocumentUpdaterTest extends TestCase
                 ],
             ], ]);
 
-        (new DocumentUpdater($data, $config, $this->coreApi, $this->io))->execute(false);
+        (new DocumentUpdater($data, $config, $this->coreApi, $this->io, false))->execute();
     }
 }
