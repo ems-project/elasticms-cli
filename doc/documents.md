@@ -19,6 +19,7 @@ Options:
       --data-length=DATA-LENGTH            Length data to parse
       --data-skip-first[=DATA-SKIP-FIRST]  Skip data header [default: true]
       --dry-run                            Skip updating documents [default: false]
+      --collection-field=COLLECTION-FIELD  Data, for a same ouuid, are saved as collection for the given field
 ```
 
 ### Arguments
