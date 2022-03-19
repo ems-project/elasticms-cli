@@ -18,6 +18,7 @@ Options:
       --data-offset=DATA-OFFSET            Offset data [default: 0]
       --data-length=DATA-LENGTH            Length data to parse
       --data-skip-first[=DATA-SKIP-FIRST]  Skip data header [default: true]
+      --dry-run                            Skip updating documents [default: false]
 ```
 
 ### Arguments
@@ -41,6 +42,7 @@ Options:
 |-----------------------------------|------------------------------------------------------------------------|
 | update.contentType **[required]** | The target contentType for updating                                    |
 | update.indexEmsId **[required]**  | The column index that contains the ouuid for updating. (first = **0**) |
+| update.collectionField            | Data, for a same ouuid, are saved as collection for the given field    |
 | update.mapping[]                  | Provide a mapping array between document and data file                 |
 | update.mapping[].field            | The document field name                                                |
 | update.mapping[].indexDataColumn  | The data value column index (first = **0**)                            |
