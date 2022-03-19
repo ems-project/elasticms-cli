@@ -20,14 +20,16 @@ final class DocumentUpdater
     private CoreApiInterface $coreApi;
     private SymfonyStyle $io;
     private bool $dryRun;
+    private ?string $collectionField;
 
-    public function __construct(Data $data, DocumentUpdateConfig $config, CoreApiInterface $coreApi, SymfonyStyle $io, bool $dryRun)
+    public function __construct(Data $data, DocumentUpdateConfig $config, CoreApiInterface $coreApi, SymfonyStyle $io, bool $dryRun, ?string $collectionField = null)
     {
         $this->data = $data;
         $this->config = $config;
         $this->coreApi = $coreApi;
         $this->io = $io;
         $this->dryRun = $dryRun;
+        $this->collectionField = $collectionField;
     }
 
     public function executeColumnTransformers(): self
@@ -45,30 +47,10 @@ final class DocumentUpdater
 
     public function execute(): self
     {
-        $this->io->section('Executing update');
-
-        $dataApi = $this->coreApi->data($this->config->updateContentType);
-        $dataProgress = $this->io->createProgressBar(\count($this->data));
-
-        foreach ($this->data as $i => $row) {
-            try {
-                $ouuid = $this->getOuuidFromRow($row);
-                $rawData = $this->getRawDataFromRow($row);
-                if ($this->io->isVerbose()) {
-                    $this->io->note(\sprintf('Update document %s', $ouuid));
-                    $this->io->note(Json::encode($rawData, true));
-                }
-                if (!$this->dryRun) {
-                    $dataApi->save($ouuid, $rawData, DataInterface::MODE_UPDATE, false);
-                }
-            } catch (\Throwable $e) {
-                $this->io->error(\sprintf('Error in row %d with ouuid %s', $i, ($ouuid ?? '??')));
-                if ($this->io->isDebug()) {
-                    $this->io->error($e->getMessage());
-                }
-            }
-
-            $dataProgress->advance();
+        if (null !== $this->collectionField) {
+            $this->executeGroupedUpdates($this->collectionField);
+        } else {
+            $this->executeUpdates();
         }
 
         return $this;
@@ -117,5 +99,66 @@ final class DocumentUpdater
         }
 
         return $rawData;
+    }
+
+    public function executeUpdates(): void
+    {
+        $this->io->section('Executing update');
+
+        $dataApi = $this->coreApi->data($this->config->updateContentType);
+        $dataProgress = $this->io->createProgressBar(\count($this->data));
+
+        foreach ($this->data as $i => $row) {
+            try {
+                $ouuid = $this->getOuuidFromRow($row);
+                $rawData = $this->getRawDataFromRow($row);
+                if ($this->io->isVerbose()) {
+                    $this->io->note(\sprintf('Update document %s', $ouuid));
+                    $this->io->note(Json::encode($rawData, true));
+                }
+                if (!$this->dryRun) {
+                    $dataApi->save($ouuid, $rawData, DataInterface::MODE_UPDATE, false);
+                }
+                exit;
+            } catch (\Throwable $e) {
+                $this->io->error(\sprintf('Error in row %d with ouuid %s', $i, ($ouuid ?? '??')));
+                if ($this->io->isDebug()) {
+                    $this->io->error($e->getMessage());
+                }
+            }
+
+            $dataProgress->advance();
+        }
+    }
+
+    public function executeGroupedUpdates(string $collectionField): void
+    {
+        $this->io->section('Executing update');
+
+        $dataApi = $this->coreApi->data($this->config->updateContentType);
+        $this->data->groupByColumn($this->config->updateIndexEmsId);
+        $dataProgress = $this->io->createProgressBar(\count($this->data));
+        foreach ($this->data as $rows) {
+            $ouuid = null;
+            $rawData = [];
+            foreach ($rows as $row) {
+                $ouuid = $this->getOuuidFromRow($row);
+                $rawData[] = $this->getRawDataFromRow($row);
+            }
+            if ($this->io->isVerbose()) {
+                $this->io->note(\sprintf('Update the collection %s document %s', $collectionField, $ouuid));
+                $this->io->note(Json::encode($rawData, true));
+            }
+            if (null === $ouuid) {
+                throw new \RuntimeException('Unexpected null ouuid');
+            }
+            if (!$this->dryRun) {
+                $dataApi->save($ouuid, [
+                    $collectionField => $rawData,
+                ], DataInterface::MODE_UPDATE, false);
+            }
+            $dataProgress->advance();
+        }
+        $dataProgress->finish();
     }
 }

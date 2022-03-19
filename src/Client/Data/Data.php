@@ -51,4 +51,17 @@ class Data implements \Countable, \IteratorAggregate
     {
         $this->data = \array_filter($this->data, $callback);
     }
+
+    public function groupByColumn(int $columnIndex): void
+    {
+        $data = [];
+        foreach ($this->data as $record) {
+            $key = $record[$columnIndex] ?? null;
+            if (!\is_string($key) && \is_int($key)) {
+                throw new \RuntimeException('Unexpected non indexable value');
+            }
+            $data[$key][] = $record;
+        }
+        $this->data = $data;
+    }
 }
