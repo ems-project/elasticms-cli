@@ -27,7 +27,6 @@ final class DocumentUpdateCommand extends AbstractCommand
     private ?int $dataLength = null;
     private bool $dataSkipFirstRow;
     private bool $dryRun;
-    private ?string $collectionField;
 
     protected static $defaultName = 'emscli:documents:update';
 
@@ -37,7 +36,6 @@ final class DocumentUpdateCommand extends AbstractCommand
     private const OPTION_DATA_LENGTH = 'data-length';
     private const OPTION_DATA_SKIP_FIRST_ROW = 'data-skip-first';
     private const OPTION_DRY_RUN = 'dry-run';
-    private const OPTION_COLLECTION_FIELD = 'collection-field';
 
     public function __construct(AdminHelper $adminHelper, FileReaderInterface $fileReader)
     {
@@ -56,7 +54,6 @@ final class DocumentUpdateCommand extends AbstractCommand
             ->addOption(self::OPTION_DATA_LENGTH, null, InputOption::VALUE_REQUIRED, 'Length data to parse')
             ->addOption(self::OPTION_DATA_SKIP_FIRST_ROW, null, InputOption::VALUE_OPTIONAL, 'Skip data header', true)
             ->addOption(self::OPTION_DRY_RUN, null, InputOption::VALUE_NONE, 'Just do a dry run')
-            ->addOption(self::OPTION_COLLECTION_FIELD, null, InputOption::VALUE_REQUIRED, 'Data, for a same ouuid, are saved as collection in the given field')
         ;
     }
 
@@ -70,7 +67,6 @@ final class DocumentUpdateCommand extends AbstractCommand
         $this->dataLength = $this->getOptionIntNull(self::OPTION_DATA_LENGTH);
         $this->dataSkipFirstRow = $this->getOptionBool(self::OPTION_DATA_SKIP_FIRST_ROW);
         $this->dryRun = $this->getOptionBool(self::OPTION_DRY_RUN);
-        $this->collectionField = $this->getOptionStringNull(self::OPTION_COLLECTION_FIELD);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -97,7 +93,7 @@ final class DocumentUpdateCommand extends AbstractCommand
             $this->io->writeln(\sprintf('Sliced data: %d rows (start %d)', \count($data), $this->dataOffset));
         }
 
-        $documentUpdater = new DocumentUpdater($data, $config, $coreApi, $this->io, $this->dryRun, $this->collectionField);
+        $documentUpdater = new DocumentUpdater($data, $config, $coreApi, $this->io, $this->dryRun);
         $documentUpdater
             ->executeColumnTransformers()
             ->execute()

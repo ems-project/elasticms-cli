@@ -20,16 +20,14 @@ final class DocumentUpdater
     private CoreApiInterface $coreApi;
     private SymfonyStyle $io;
     private bool $dryRun;
-    private ?string $collectionField;
 
-    public function __construct(Data $data, DocumentUpdateConfig $config, CoreApiInterface $coreApi, SymfonyStyle $io, bool $dryRun, ?string $collectionField = null)
+    public function __construct(Data $data, DocumentUpdateConfig $config, CoreApiInterface $coreApi, SymfonyStyle $io, bool $dryRun)
     {
         $this->data = $data;
         $this->config = $config;
         $this->coreApi = $coreApi;
         $this->io = $io;
         $this->dryRun = $dryRun;
-        $this->collectionField = $collectionField;
     }
 
     public function executeColumnTransformers(): self
@@ -47,8 +45,9 @@ final class DocumentUpdater
 
     public function execute(): self
     {
-        if (null !== $this->collectionField) {
-            $this->executeGroupedUpdates($this->collectionField);
+        $collectionField = $this->config->getCollectionField();
+        if (null !== $collectionField) {
+            $this->executeGroupedUpdates($collectionField);
         } else {
             $this->executeUpdates();
         }

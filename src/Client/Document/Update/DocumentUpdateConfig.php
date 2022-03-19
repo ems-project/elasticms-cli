@@ -18,6 +18,7 @@ final class DocumentUpdateConfig
     public int $updateIndexEmsId;
     /** @var UpdateMap[] */
     public array $updateMapping;
+    private ?string $collectionField;
 
     /**
      * @param array<mixed> $config
@@ -25,7 +26,7 @@ final class DocumentUpdateConfig
     public function __construct(array $config)
     {
         $resolver = $this->getOptionsResolver();
-        /** @var array{'update': array{'contentType': string, 'indexEmsId': int, 'mapping': UpdateMap[]}, 'dataColumns': DataColumn[]} $config */
+        /** @var array{'update': array{'contentType': string, 'indexEmsId': int, 'mapping': UpdateMap[], collectionField: string|null}, 'dataColumns': DataColumn[]} $config */
         $config = $resolver->resolve($config);
 
         $this->dataColumns = $config['dataColumns'];
@@ -33,6 +34,7 @@ final class DocumentUpdateConfig
         $this->updateContentType = \strval($config['update']['contentType']);
         $this->updateIndexEmsId = \intval($config['update']['indexEmsId']);
         $this->updateMapping = $config['update']['mapping'];
+        $this->collectionField = $config['update']['collectionField'];
     }
 
     public static function fromFile(string $filename): self
@@ -59,10 +61,11 @@ final class DocumentUpdateConfig
             ])
             ->setDefault('update', function (OptionsResolver $updateResolver) {
                 $updateResolver
-                    ->setDefaults(['mapping' => []])
+                    ->setDefaults(['mapping' => [], 'collectionField' => null])
                     ->setRequired(['contentType', 'indexEmsId', 'mapping'])
                     ->setAllowedTypes('contentType', 'string')
                     ->setAllowedTypes('indexEmsId', 'int')
+                    ->setAllowedTypes('collectionField', ['null', 'string'])
                     ->setNormalizer('mapping', function (Options $options, array $value) {
                         return \array_map(fn ($map) => new UpdateMap($map), $value);
                     })
@@ -82,5 +85,10 @@ final class DocumentUpdateConfig
         ;
 
         return $optionsResolver;
+    }
+
+    public function getCollectionField(): ?string
+    {
+        return $this->collectionField;
     }
 }

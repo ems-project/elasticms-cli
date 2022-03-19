@@ -109,11 +109,12 @@ final class DocumentUpdaterTest extends TestCase
             'update' => [
                 'contentType' => 'test',
                 'indexEmsId' => 0,
+                'collectionField' => 'collection',
                 'mapping' => [
                     ['field' => 'title', 'indexDataColumn' => 1],
                 ],
             ], ]);
 
-        (new DocumentUpdater($data, $config, $this->coreApi, $this->io, false, 'collection'))->execute();
+        (new DocumentUpdater($data, $config, $this->coreApi, $this->io, false))->execute();
     }
 }
