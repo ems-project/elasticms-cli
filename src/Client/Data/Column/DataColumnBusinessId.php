@@ -6,7 +6,6 @@ namespace App\Client\Data\Column;
 
 use App\Client\Data\Data;
 use Elastica\Query\BoolQuery;
-use Elastica\Query\Exists;
 use EMS\CommonBundle\Common\CoreApi\Search\Scroll;
 use EMS\CommonBundle\Common\EMSLink;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
@@ -18,6 +17,8 @@ final class DataColumnBusinessId extends DataColumn
     public string $field;
     public string $contentType;
     public int $scrollSize;
+    /** @var ?array<mixed> */
+    private ?array $scrollMust;
     private bool $removeNotFound;
 
     /**
@@ -25,7 +26,7 @@ final class DataColumnBusinessId extends DataColumn
      */
     public function __construct(array $config)
     {
-        /** @var array{index: int, field: string, contentType: string, scrollSize: int, removeNotFound: bool} $options */
+        /** @var array{index: int, field: string, contentType: string, scrollSize: int, scrollMust: ?array<mixed>, removeNotFound: bool} $options */
         $options = $this->getOptionsResolver()->resolve($config);
 
         parent::__construct($options['index']);
@@ -33,6 +34,7 @@ final class DataColumnBusinessId extends DataColumn
         $this->contentType = $options['contentType'];
         $this->scrollSize = $options['scrollSize'];
         $this->removeNotFound = $options['removeNotFound'];
+        $this->scrollMust = $options['scrollMust'];
     }
 
     protected function getOptionsResolver(): OptionsResolver
@@ -42,6 +44,7 @@ final class DataColumnBusinessId extends DataColumn
             ->setRequired(['field', 'contentType'])
             ->setDefaults([
                 'scrollSize' => 1000,
+                'scrollMust' => null,
                 'removeNotFound' => false,
             ])
             ->setAllowedTypes('removeNotFound', ['bool'])
@@ -84,7 +87,9 @@ final class DataColumnBusinessId extends DataColumn
         $environmentAlias = $coreApi->meta()->getDefaultContentTypeEnvironmentAlias($this->contentType);
 
         $boolQuery = new BoolQuery();
-        $boolQuery->addMust(new Exists($this->field));
+        if (null !== $this->scrollMust) {
+            $boolQuery->addMust($this->scrollMust);
+        }
 
         $search = new Search([$environmentAlias], $boolQuery);
         $search->setContentTypes([$this->contentType]);
