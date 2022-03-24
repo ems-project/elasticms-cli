@@ -11,6 +11,7 @@ use EMS\CommonBundle\Common\CoreApi\Search\Scroll;
 use EMS\CommonBundle\Common\EMSLink;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use EMS\CommonBundle\Search\Search;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 final class DataColumnBusinessId extends DataColumn
@@ -21,6 +22,10 @@ final class DataColumnBusinessId extends DataColumn
     /** @var ?array<mixed> */
     private ?array $scrollMust;
     private bool $removeNotFound;
+
+    private int $notFound = 0;
+    /** @var array<mixed> */
+    private array $notFoundValues = [];
 
     /**
      * @param array<mixed> $config
@@ -77,7 +82,7 @@ final class DataColumnBusinessId extends DataColumn
         $progressScroll->finish();
 
         if ($this->removeNotFound) {
-            $data->filter(fn (array $row) => EMSLink::fromText($row[$this->columnIndex])->isValid());
+            $this->removeNotFound($data, $io);
         }
 
         $io->newLine(2);
@@ -98,5 +103,23 @@ final class DataColumnBusinessId extends DataColumn
         $search->setSources([$this->field]);
 
         return $coreApi->search()->scroll($search, $this->scrollSize);
+    }
+
+    private function removeNotFound(Data $data, SymfonyStyle $io): void
+    {
+        $data->filter(function (array $row) {
+            if (EMSLink::fromText($row[$this->columnIndex])->isValid()) {
+                return true;
+            }
+
+            ++$this->notFound;
+            if (!\in_array($row[$this->columnIndex], $this->notFoundValues)) {
+                $this->notFoundValues[] = $row[$this->columnIndex];
+            }
+
+            return false;
+        });
+
+        $io->note(\sprintf('Removed %d rows with %s invalid values', $this->notFound, \count($this->notFoundValues)));
     }
 }
