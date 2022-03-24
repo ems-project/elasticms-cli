@@ -6,6 +6,7 @@ namespace App\Client\Data\Column;
 
 use App\Client\Data\Data;
 use Elastica\Query\BoolQuery;
+use Elastica\Query\Exists;
 use EMS\CommonBundle\Common\CoreApi\Search\Scroll;
 use EMS\CommonBundle\Common\EMSLink;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
@@ -87,6 +88,7 @@ final class DataColumnBusinessId extends DataColumn
         $environmentAlias = $coreApi->meta()->getDefaultContentTypeEnvironmentAlias($this->contentType);
 
         $boolQuery = new BoolQuery();
+        $boolQuery->addMust(new Exists($this->field));
         if (null !== $this->scrollMust) {
             $boolQuery->addMust($this->scrollMust);
         }
