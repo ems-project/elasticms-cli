@@ -108,7 +108,7 @@ final class DataColumnBusinessId extends DataColumn
     private function removeNotFound(Data $data, SymfonyStyle $io): void
     {
         $data->filter(function (array $row) {
-            if (EMSLink::fromText($row[$this->columnIndex])->isValid()) {
+            if (EMSLink::fromText((string) $row[$this->columnIndex])->isValid()) {
                 return true;
             }
 
