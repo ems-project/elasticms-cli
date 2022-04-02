@@ -18,5 +18,9 @@ class FunctionsTest extends TestCase
         $json = Json::decode($splitted);
         $this->assertEquals(2, \count($json));
         $this->assertEquals('Titre', $json[1]['object']['title']);
+        $this->assertEquals('Titre', $json[1]['label']);
+        $this->assertEquals('Titre', $json[1]['object']['label']);
+        $this->assertEquals('<p>Coucou</p> ', $json[0]['object']['body']);
+        $this->assertEquals(' toto <p>foobar</p>', $json[1]['object']['body']);
     }
 }
