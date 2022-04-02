@@ -28,6 +28,7 @@ class Functions
         }
         $current = [];
         $output = [];
+        $body = self::trimDivContainers($body);
         foreach ($body->childNodes as $child) {
             if ($child instanceof \DOMNode && $tag === $child->nodeName) {
                 self::addNodeToJsonMenu($document, $current, $output, $tag, $fieldName, $typeName, $labelField);
@@ -73,5 +74,21 @@ class Functions
             $item['object'][$labelField] = $label;
         }
         $output[] = $item;
+    }
+
+    private static function trimDivContainers(\DOMElement $body): \DOMElement
+    {
+        $list = [];
+        foreach ($body->childNodes as $child) {
+            if ($child instanceof \DOMText && '' === \preg_replace('!\s+!', '', $child->textContent)) {
+                continue;
+            }
+            $list[] = $child;
+        }
+        if (1 === \count($list) && $list[0] instanceof \DOMElement && 'div' === $list[0]->nodeName) {
+            return self::trimDivContainers($list[0]);
+        }
+
+        return $body;
     }
 }
