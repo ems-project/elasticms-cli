@@ -9,8 +9,14 @@ class Functions
 {
     public static function domToJsonMenu(string $html, string $tag, string $fieldName, string $typeName, ?string $labelField = null): string
     {
+        if ('' === \preg_replace('!\s+!', ' ', $html)) {
+            return '[]';
+        }
+
         $document = new \DOMDocument('1.0', 'UTF-8');
-        $document->loadHTML(\sprintf('<?xml encoding="utf-8" ?><body>%s</body>', $html));
+        if (true !== $document->loadHTML(\sprintf('<?xml encoding="utf-8" ?><body>%s</body>', $html))) {
+            throw new \RuntimeException(\sprintf('Unexpected error while loading this html %s', $html));
+        }
 
         $nodeList = $document->getElementsByTagName('body');
         if (1 !== $nodeList->count()) {
