@@ -375,6 +375,12 @@ class ConfigManager
             return (null === $format || null === $timestamp) ? null : \date($format, $timestamp);
         });
 
+        $this->expressionLanguage->register('dom_to_json_menu', function ($html, $tag, $fieldName, $typeName, $labelField) {
+            return \sprintf('((null === %1$s || null === %2$s || null === %3$s || null === %4$s || null === %5$s) ? null : \\App\\ExpressionLanguage\\Functions::domToJsonMenu(%1$s, %2$s, %3$s, %4$s, %5$s))', $html, $tag, $fieldName, $typeName, $labelField);
+        }, function ($arguments, $html, $tag, $fieldName, $typeName, $labelField) {
+            return (null === $html || null === $tag || null === $fieldName || null === $typeName || null === $labelField) ? null : \App\ExpressionLanguage\Functions::domToJsonMenu($html, $tag, $fieldName, $typeName, $labelField);
+        });
+
         return $this->expressionLanguage;
     }
 
