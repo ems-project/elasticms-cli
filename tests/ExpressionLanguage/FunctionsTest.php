@@ -42,8 +42,6 @@ class FunctionsTest extends TestCase
     {
         $html = \file_get_contents(\join(DIRECTORY_SEPARATOR, [__DIR__, 'div_dom_to_json.html']));
         $splitted = Functions::domToJsonMenu($html, 'h2', 'body', 'paragraph', 'title');
-
-        \dump(Json::decode($splitted));
         $json = Json::decode($splitted);
         $this->assertEquals(9, \count($json));
     }
