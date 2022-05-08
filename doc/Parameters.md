@@ -27,13 +27,6 @@ Examples:
 - `DATABASE_URL="mysql://db_user:db_password@127.0.0.1:3306/db_name?serverVersion=5.7&charset=utf8mb4"`
 - `DATABASE_URL="postgresql://symfony:ChangeMe@127.0.0.1:5432/app?serverVersion=13&charset=utf8"`
 
-## Redis
-
-
-```dotenv
-REDIS_HOST=localhost
-REDIS_PORT=6379
-```
 
 ## Elasticms Common Bundle variables
 
@@ -72,20 +65,8 @@ Unique required value per project, otherwise wipe storage will clear all cached 
 
 ### EMS_REDIS_HOST
 
-Use a different redis host for the common cache service. Default REDIS_HOST env variable.
+Redis host for the common cache service. Default `localhost`.
 
 ### EMS_REDIS_PORT
 
-Use a different redis port for the common cache service. Default REDIS_PORT env variable.
-
-### EMS_METRIC_ENABLED
-
-Default value `false`, if true `/metrics` is added to the routes.
-
-### EMS_METRIC_HOST
-
-Default value empty, symfony route host pattern for allow hosting on /metrics
-
-### EMS_METRIC_PORT
-
-Default value null, if defined will check the SERVER_PORT and throw 404 if not matching
+Redis port for the common cache service. Default `6379`.

@@ -8,11 +8,8 @@ parameters:
 
   env(EMS_CACHE): 'file_system'
   env(EMS_CACHE_PREFIX): 'emscli_'
-  env(EMS_REDIS_HOST): '%env(REDIS_HOST)%'
-  env(EMS_REDIS_PORT): '%env(int:REDIS_PORT)%'
-  env(EMS_METRIC_ENABLED): false
-  env(EMS_METRIC_HOST): ''
-  env(EMS_METRIC_PORT): ~
+  env(EMS_REDIS_HOST): 'localhost'
+  env(EMS_REDIS_PORT): '6379'
 
 
 ems_common:
@@ -28,6 +25,6 @@ ems_common:
       host: '%env(EMS_REDIS_HOST)%'
       port: '%env(int:EMS_REDIS_PORT)%'
   metric:
-    enabled: '%env(bool:EMS_METRIC_ENABLED)%'
-    host: '%env(string:EMS_METRIC_HOST)%'
-    port: '%env(EMS_METRIC_PORT)%'
+    enabled: 'false'
+    host: ''
+    port: ~
