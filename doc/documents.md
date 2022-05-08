@@ -18,6 +18,7 @@ Options:
       --data-offset=DATA-OFFSET            Offset data [default: 0]
       --data-length=DATA-LENGTH            Length data to parse
       --data-skip-first[=DATA-SKIP-FIRST]  Skip data header [default: true]
+      --dry-run                            Skip updating documents [default: false]
 ```
 
 ### Arguments
@@ -41,6 +42,7 @@ Options:
 |-----------------------------------|------------------------------------------------------------------------|
 | update.contentType **[required]** | The target contentType for updating                                    |
 | update.indexEmsId **[required]**  | The column index that contains the ouuid for updating. (first = **0**) |
+| update.collectionField            | Data, for a same ouuid, are saved as collection for the given field    |
 | update.mapping[]                  | Provide a mapping array between document and data file                 |
 | update.mapping[].field            | The document field name                                                |
 | update.mapping[].indexDataColumn  | The data value column index (first = **0**)                            |
@@ -80,6 +82,7 @@ Necessary if the data file does not contain emsIds for **update.indexEmsId** or 
 | dataColumns[].contentType **[required]**     | the data value comes from this contentType                              |
 | dataColumns[].field **[required]**           | the data value comes from this field inside the contentType             |
 | dataColumns[].scrollSize [default=1000]      | for performance we scroll overall documents and build an internal array |
+| dataColumns[].scrollMust [default=null]      | add a must query for scrolling                                          |
 | dataColumns[].removeNotFound [default=false] | after transforming remove all not valid emsIds                          |
 
 
@@ -90,6 +93,7 @@ The first column (0) contains the product code and the 4th column contains a cat
 
 For updating the products we need an emsId for the products and category (dataLink).
 The data can contain not existing category codes, do not update them (removeNotFound=true).
+Also the example will only update active products by the scrollMust option.
 
 ```json
 {
@@ -106,7 +110,11 @@ The data can contain not existing category codes, do not update them (removeNotF
       "type": "businessId",
       "field": "code",
       "contentType": "product",
-      "scrollSize": 2000
+      "removeNotFound": true,
+      "scrollSize": 2000,
+      "scrollMust": [
+        { "term": { "active": { "value": true } } }
+      ]
     },
     {
       "index": 3,
