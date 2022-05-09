@@ -61,6 +61,19 @@
             "./src/Repository/.gitignore"
         ]
     },
+    "doctrine/doctrine-migrations-bundle": {
+        "version": "3.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "3.1",
+            "ref": "ee609429c9ee23e22d6fa5728211768f51ed2818"
+        },
+        "files": [
+            "config/packages/doctrine_migrations.yaml",
+            "migrations/.gitignore"
+        ]
+    },
     "doctrine/event-manager": {
         "version": "1.1.1"
     },
@@ -72,6 +85,9 @@
     },
     "doctrine/lexer": {
         "version": "1.2.2"
+    },
+    "doctrine/migrations": {
+        "version": "3.5.0"
     },
     "doctrine/orm": {
         "version": "2.11.1"
@@ -106,6 +122,9 @@
             "./.php-cs-fixer.dist.php"
         ]
     },
+    "friendsofphp/proxy-manager-lts": {
+        "version": "v1.0.12"
+    },
     "guzzlehttp/guzzle": {
         "version": "6.5.5"
     },
@@ -123,6 +142,9 @@
     },
     "kevinrob/guzzle-cache-middleware": {
         "version": "v4.0.0"
+    },
+    "laminas/laminas-code": {
+        "version": "4.5.1"
     },
     "maennchen/zipstream-php": {
         "version": "2.1.0"
@@ -206,6 +228,9 @@
             "./phpunit.xml.dist",
             "./tests/bootstrap.php"
         ]
+    },
+    "promphp/prometheus_client_php": {
+        "version": "v2.6.0"
     },
     "psr/cache": {
         "version": "1.0.1"

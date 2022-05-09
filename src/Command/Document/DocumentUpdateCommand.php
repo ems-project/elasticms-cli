@@ -7,6 +7,7 @@ namespace App\Command\Document;
 use App\Client\Data\Data;
 use App\Client\Document\Update\DocumentUpdateConfig;
 use App\Client\Document\Update\DocumentUpdater;
+use App\Commands;
 use EMS\CommonBundle\Common\Admin\AdminHelper;
 use EMS\CommonBundle\Common\Command\AbstractCommand;
 use EMS\CommonBundle\Contracts\File\FileReaderInterface;
@@ -28,7 +29,7 @@ final class DocumentUpdateCommand extends AbstractCommand
     private bool $dataSkipFirstRow;
     private bool $dryRun;
 
-    protected static $defaultName = 'emscli:documents:update';
+    protected static $defaultName = Commands::DOCUMENTS_UPDATE;
 
     private const ARGUMENT_DATA_FILE = 'data-file';
     private const ARGUMENT_CONFIG_FILE = 'config-file';
