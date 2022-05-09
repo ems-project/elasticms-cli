@@ -9,6 +9,7 @@ use App\Client\WebToElasticms\Config\ConfigManager;
 use App\Client\WebToElasticms\Extract\Extractor;
 use App\Client\WebToElasticms\Rapport\Rapport;
 use App\Client\WebToElasticms\Update\UpdateManager;
+use App\Commands;
 use EMS\CommonBundle\Common\Admin\AdminHelper;
 use EMS\CommonBundle\Common\Command\AbstractCommand;
 use EMS\CommonBundle\Common\Standard\Json;
@@ -20,7 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class WebMigrationCommand extends AbstractCommand
 {
-    protected static $defaultName = 'emscli:web:migrate';
+    protected static $defaultName = Commands::WEB_MIGRATION;
 
     private const ARG_CONFIG_FILE_PATH = 'json-path';
     private const OPTION_CONTINUE = 'continue';
