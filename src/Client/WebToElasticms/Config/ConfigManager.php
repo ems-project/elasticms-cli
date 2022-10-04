@@ -270,8 +270,8 @@ class ConfigManager
         $stream->seek(0);
         $hash = $this->coreApi->file()->uploadStream($stream, $filename, $mimeType);
 
-        if (null === $hash) {
-            throw new \RuntimeException('Unexpected null hash');
+        if (0 === \strlen($hash)) {
+            throw new \RuntimeException('Unexpected empty hash');
         }
 
         return [

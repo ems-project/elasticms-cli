@@ -25,6 +25,8 @@ class Rapport
     private array $urlsInError = [['Doc\'s URLs', 'URLs', 'Code', 'Message']];
     /** @var string[][] */
     private array $dataLinksInError = [['Path', 'Referrers']];
+    /** @var string[][] */
+    private array $updatedDocuments = [['CRUD', 'Content Type', 'OUUID', 'Locale', 'URL']];
     private string $filename;
     private SpreadsheetGeneratorService $spreadsheetGeneratorService;
     private CacheManager $cacheManager;
@@ -62,6 +64,10 @@ class Rapport
                 [
                     'name' => 'DataLinks error',
                     'rows' => \array_values($this->dataLinksInError),
+                ],
+                [
+                    'name' => 'Updated documents',
+                    'rows' => \array_values($this->updatedDocuments),
                 ],
             ],
         ];
@@ -130,5 +136,17 @@ class Rapport
     public function addExtractError(WebResource $resource, Extractor $extractor, int $count): void
     {
         $this->extractErrors[] = [$resource->getType(), $resource->getUrl(), $resource->getLocale(), $extractor->getSelector(), $extractor->getStrategy(), $extractor->getProperty(), $extractor->getAttribute() ?? '', \strval($count)];
+    }
+
+    public function addNewDocument(Document $document): void
+    {
+        $this->addUpdateDocument($document, 'new');
+    }
+
+    public function addUpdateDocument(Document $document, string $updateType = 'update'): void
+    {
+        foreach ($document->getResources() as $resource) {
+            $this->updatedDocuments[] = [$updateType, $document->getType(), $document->getOuuid(), $resource->getLocale(), $resource->getUrl()];
+        }
     }
 }

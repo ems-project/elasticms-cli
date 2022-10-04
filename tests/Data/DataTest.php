@@ -53,7 +53,7 @@ final class DataTest extends TestCase
         $this->assertCount(8, $testData);
 
         foreach ($testData as $i => $row) {
-            $this->assertSame((++$i + 2), $row[0]);
+            $this->assertSame(++$i + 2, $row[0]);
         }
     }
 
@@ -67,7 +67,7 @@ final class DataTest extends TestCase
         $this->assertCount(3, $testData);
 
         foreach ($testData as $i => $row) {
-            $this->assertSame((++$i + 3), $row[0]);
+            $this->assertSame(++$i + 3, $row[0]);
         }
     }
 

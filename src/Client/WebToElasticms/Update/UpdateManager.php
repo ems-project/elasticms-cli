@@ -6,6 +6,7 @@ namespace App\Client\WebToElasticms\Update;
 
 use App\Client\WebToElasticms\Config\ConfigManager;
 use App\Client\WebToElasticms\Extract\ExtractedData;
+use App\Client\WebToElasticms\Rapport\Rapport;
 use EMS\CommonBundle\Common\Standard\Json;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiExceptionInterface;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
@@ -26,7 +27,7 @@ class UpdateManager
         $this->dryRun = $dryRun;
     }
 
-    public function update(ExtractedData $extractedData, bool $force): void
+    public function update(ExtractedData $extractedData, bool $force, Rapport $rapport): void
     {
         $ouuid = $extractedData->getDocument()->getOuuid();
         $data = $extractedData->getData();
@@ -35,6 +36,7 @@ class UpdateManager
         if (!$typeManager->head($ouuid)) {
             $data = \array_merge_recursive($type->getDefaultData(), $data);
             $this->logger->debug(Json::encode($data, true));
+            $rapport->addNewDocument($extractedData->getDocument());
             if ($this->dryRun) {
                 return;
             }
@@ -53,6 +55,7 @@ class UpdateManager
             }
             try {
                 $this->logger->debug(Json::encode($data, true));
+                $rapport->addUpdateDocument($extractedData->getDocument());
                 if ($this->dryRun) {
                     return;
                 }
