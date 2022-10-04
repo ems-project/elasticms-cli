@@ -137,7 +137,7 @@ class WebMigrationCommand extends AbstractCommand
             if ($this->dump) {
                 $this->io->text(Json::encode($extractedData->getData(), true));
             }
-            $updateManager->update($extractedData, $this->force);
+            $updateManager->update($extractedData, $this->force, $rapport);
             $configManager->save($this->jsonPath);
             $rapport->save();
             if ($this->continue && ++$counter >= $this->maxUpdate) {
