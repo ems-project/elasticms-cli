@@ -31,7 +31,7 @@ class InternaleLinkTest extends TestCase
         $internalLink = new InternalLink($logger, $config, $rapport, 'https://demo.com/a/b');
 
         $crawler = new Crawler(
-'<div style="padding: inherit;"><a href="https://demo.com/toto/link">Url</a></div>
+            '<div style="padding: inherit;"><a href="https://demo.com/toto/link">Url</a></div>
 <div style="padding: inherit;"><a href="//demo.com/toto/link">Url</a></div>
 <div style="padding: inherit;"><a href="/toto/link">Absolute link</a></div>
 <div style="padding: inherit;"><a href="../../toto/link">Absolute link</a></div>
@@ -41,7 +41,7 @@ class InternaleLinkTest extends TestCase
 
         $internalLink->process($webResource, $crawler->filter('body'));
         $this->assertEquals(
-'<div style="padding: inherit;"><a href="ems://object:page:ouuid">Url</a></div>
+            '<div style="padding: inherit;"><a href="ems://object:page:ouuid">Url</a></div>
 <div style="padding: inherit;"><a href="ems://object:page:ouuid">Url</a></div>
 <div style="padding: inherit;"><a href="ems://object:page:ouuid">Absolute link</a></div>
 <div style="padding: inherit;"><a href="ems://object:page:ouuid">Absolute link</a></div>
