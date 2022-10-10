@@ -132,7 +132,6 @@ class Extractor
     private function extractDataFromResource(\App\Client\WebToElasticms\Config\Document $document, WebResource $resource, array &$data): void
     {
         $result = $this->cache->get($resource->getUrl());
-        $this->logger->notice(\sprintf('status code %d', $result->getResponse()->getStatusCode()));
         $analyzer = $this->config->getAnalyzer($resource->getType());
         switch ($analyzer->getType()) {
                 case Html::TYPE:
