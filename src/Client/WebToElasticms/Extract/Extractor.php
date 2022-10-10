@@ -99,6 +99,10 @@ class Extractor
                 continue;
             }
 
+            if (!$withoutError) {
+                continue;
+            }
+
             $hash = \sha1(Json::encode($data));
 
             $type = $this->config->getType($document->getType());
@@ -128,15 +132,18 @@ class Extractor
     private function extractDataFromResource(\App\Client\WebToElasticms\Config\Document $document, WebResource $resource, array &$data): void
     {
         $result = $this->cache->get($resource->getUrl());
-        $analyzer = $this->config->getAnalyzer($resource->getType());
-        switch ($analyzer->getType()) {
-            case Html::TYPE:
-                $extractor = new Html($this->config, $document, $this->logger, $this->rapport);
-                break;
-            default:
-                throw new \RuntimeException(\sprintf('Type of analyzer %s unknown', $analyzer->getType()));
+        $this->logger->notice(\sprintf('status code %d', $result->getResponse()->getStatusCode()));
+        if ( $result->getResponse()->getStatusCode() < '400' ) {
+            $analyzer = $this->config->getAnalyzer($resource->getType());
+            switch ($analyzer->getType()) {
+                case Html::TYPE:
+                    $extractor = new Html($this->config, $document, $this->logger, $this->rapport);
+                    break;
+                default:
+                    throw new \RuntimeException(\sprintf('Type of analyzer %s unknown', $analyzer->getType()));
+            }
+            $extractor->extractData($resource, $result, $analyzer, $data);
         }
-        $extractor->extractData($resource, $result, $analyzer, $data);
     }
 
     /**

@@ -22,7 +22,7 @@ class Rapport
     /** @var string[][] */
     private array $extractErrors = [['Type', 'URL', 'Locale', 'Selector', 'Strategy', 'Property', 'Attribute', 'Count']];
     /** @var string[][] */
-    private array $urlsInError = [['Doc\'s URLs', 'URLs', 'Code', 'Message']];
+    private array $urlsInError = [['Doc\'s URLs', 'URLs', 'Code', 'Message', 'Type']];
     /** @var string[][] */
     private array $dataLinksInError = [['Path', 'Referrers']];
     /** @var string[][] */
@@ -115,9 +115,9 @@ class Rapport
         $this->missingInternalUrls[$url->getPath()] = [$url->getPath(), $url->getUrl(), \strval($code), $message, $url->getReferer() ?? 'N/A'];
     }
 
-    public function addResourceInError(WebResource $resource, Url $url, int $code, string $message): void
+    public function addResourceInError(WebResource $resource, Url $url, int $code, string $message, string $type = 'import'): void
     {
-        $this->urlsInError[] = [$resource->getUrl(), $url->getUrl(), \strval($code), $message];
+        $this->urlsInError[] = [$resource->getUrl(), $url->getUrl(), \strval($code), $message, $type];
     }
 
     public function addNothingExtracted(Document $document): void
