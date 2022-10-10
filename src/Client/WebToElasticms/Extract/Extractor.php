@@ -133,17 +133,15 @@ class Extractor
     {
         $result = $this->cache->get($resource->getUrl());
         $this->logger->notice(\sprintf('status code %d', $result->getResponse()->getStatusCode()));
-        if ( $result->getResponse()->getStatusCode() < '400' ) {
-            $analyzer = $this->config->getAnalyzer($resource->getType());
-            switch ($analyzer->getType()) {
+        $analyzer = $this->config->getAnalyzer($resource->getType());
+        switch ($analyzer->getType()) {
                 case Html::TYPE:
                     $extractor = new Html($this->config, $document, $this->logger, $this->rapport);
                     break;
                 default:
                     throw new \RuntimeException(\sprintf('Type of analyzer %s unknown', $analyzer->getType()));
             }
-            $extractor->extractData($resource, $result, $analyzer, $data);
-        }
+        $extractor->extractData($resource, $result, $analyzer, $data);
     }
 
     /**
