@@ -99,6 +99,10 @@ class Extractor
                 continue;
             }
 
+            if (!$withoutError) {
+                continue;
+            }
+
             $hash = \sha1(Json::encode($data));
 
             $type = $this->config->getType($document->getType());
