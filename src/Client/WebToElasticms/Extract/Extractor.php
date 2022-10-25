@@ -7,6 +7,7 @@ namespace App\Client\WebToElasticms\Extract;
 use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Config\Computer;
 use App\Client\WebToElasticms\Config\ConfigManager;
+use App\Client\WebToElasticms\Config\DocumentResources;
 use App\Client\WebToElasticms\Config\WebResource;
 use App\Client\WebToElasticms\Helper\ExpressionData;
 use App\Client\WebToElasticms\Helper\Url;
@@ -105,12 +106,13 @@ class Extractor
 
             $hash = \sha1(Json::encode($data));
 
+            $documentResource = new DocumentResources($document->getResources());
             $type = $this->config->getType($document->getType());
             foreach ($type->getComputers() as $computer) {
-                if (!$this->condition($computer, $data)) {
+                if (!$this->condition($computer, $data, $documentResource)) {
                     continue;
                 }
-                $value = $this->compute($computer, $data);
+                $value = $this->compute($computer, $data, $documentResource);
                 $this->assignComputedProperty($computer, $data, $value);
             }
 
@@ -146,10 +148,11 @@ class Extractor
     /**
      * @param array<mixed> $data
      */
-    private function condition(Computer $computer, array &$data): bool
+    private function condition(Computer $computer, array &$data, DocumentResources $documentResources): bool
     {
         $condition = $this->expressionLanguage->evaluate($computer->getCondition(), $context = [
             'data' => new ExpressionData($data),
+            'resources' => $documentResources,
         ]);
         if (!\is_bool($condition)) {
             throw new \RuntimeException(\sprintf('Condition "%s" must return a boolean', $computer->getCondition()));
@@ -163,10 +166,11 @@ class Extractor
      *
      * @return mixed
      */
-    private function compute(Computer $computer, array &$data)
+    private function compute(Computer $computer, array &$data, DocumentResources $documentResources)
     {
         $value = $this->expressionLanguage->evaluate($computer->getExpression(), $context = [
             'data' => new ExpressionData($data),
+            'resources' => $documentResources,
         ]);
 
         if ($computer->isJsonDecode() && \is_string($value)) {
