@@ -8,7 +8,6 @@ use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Config\Computer;
 use App\Client\WebToElasticms\Config\ConfigManager;
 use App\Client\WebToElasticms\Config\WebResource;
-use App\Client\WebToElasticms\Helper\DocumentResources;
 use App\Client\WebToElasticms\Helper\ExpressionData;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Client\WebToElasticms\Rapport\Rapport;
@@ -106,13 +105,12 @@ class Extractor
 
             $hash = \sha1(Json::encode($data));
 
-            $documentResource = new DocumentResources($document->getResources());
             $type = $this->config->getType($document->getType());
             foreach ($type->getComputers() as $computer) {
-                if (!$this->condition($computer, $data, $documentResource)) {
+                if (!$this->condition($computer, $data, $document)) {
                     continue;
                 }
-                $value = $this->compute($computer, $data, $documentResource);
+                $value = $this->compute($computer, $data, $document);
                 $this->assignComputedProperty($computer, $data, $value);
             }
 
@@ -148,11 +146,11 @@ class Extractor
     /**
      * @param array<mixed> $data
      */
-    private function condition(Computer $computer, array &$data, DocumentResources $documentResources): bool
+    private function condition(Computer $computer, array &$data, \App\Client\WebToElasticms\Config\Document $document): bool
     {
         $condition = $this->expressionLanguage->evaluate($computer->getCondition(), $context = [
             'data' => new ExpressionData($data),
-            'resources' => $documentResources,
+            'resources' => $document,
         ]);
         if (!\is_bool($condition)) {
             throw new \RuntimeException(\sprintf('Condition "%s" must return a boolean', $computer->getCondition()));
@@ -166,11 +164,11 @@ class Extractor
      *
      * @return mixed
      */
-    private function compute(Computer $computer, array &$data, DocumentResources $documentResources)
+    private function compute(Computer $computer, array &$data, \App\Client\WebToElasticms\Config\Document $document)
     {
         $value = $this->expressionLanguage->evaluate($computer->getExpression(), $context = [
             'data' => new ExpressionData($data),
-            'resources' => $documentResources,
+            'resources' => $document,
         ]);
 
         if ($computer->isJsonDecode() && \is_string($value)) {
