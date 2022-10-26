@@ -7,6 +7,7 @@ namespace App\Client\WebToElasticms\Extract;
 use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Config\Computer;
 use App\Client\WebToElasticms\Config\ConfigManager;
+use App\Client\WebToElasticms\Config\Document as ConfigDocument;
 use App\Client\WebToElasticms\Config\WebResource;
 use App\Client\WebToElasticms\Helper\ExpressionData;
 use App\Client\WebToElasticms\Helper\Url;
@@ -129,7 +130,7 @@ class Extractor
     /**
      * @param array<mixed> $data
      */
-    private function extractDataFromResource(\App\Client\WebToElasticms\Config\Document $document, WebResource $resource, array &$data): void
+    private function extractDataFromResource(ConfigDocument $document, WebResource $resource, array &$data): void
     {
         $result = $this->cache->get($resource->getUrl());
         $analyzer = $this->config->getAnalyzer($resource->getType());
@@ -146,7 +147,7 @@ class Extractor
     /**
      * @param array<mixed> $data
      */
-    private function condition(Computer $computer, array &$data, \App\Client\WebToElasticms\Config\Document $document): bool
+    private function condition(Computer $computer, array &$data, ConfigDocument $document): bool
     {
         $condition = $this->expressionLanguage->evaluate($computer->getCondition(), $context = [
             'data' => new ExpressionData($data),
@@ -164,7 +165,7 @@ class Extractor
      *
      * @return mixed
      */
-    private function compute(Computer $computer, array &$data, \App\Client\WebToElasticms\Config\Document $document)
+    private function compute(Computer $computer, array &$data, ConfigDocument $document)
     {
         $value = $this->expressionLanguage->evaluate($computer->getExpression(), $context = [
             'data' => new ExpressionData($data),
