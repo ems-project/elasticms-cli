@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Client\WebToElasticms\Config;
 
+use App\Client\WebToElasticms\Helper\Url;
+
 class Document
 {
     /** @var WebResource[] */
@@ -67,6 +69,19 @@ class Document
         }
 
         return false;
+    }
+
+    public function getResourcePathFor(string $locale): ?string
+    {
+        foreach ($this->resources as $resource) {
+            if ($resource->getLocale() === $locale) {
+                $url = new Url($resource->getUrl());
+
+                return $url->getPath();
+            }
+        }
+
+        return null;
     }
 
     public function addResource(WebResource $param): void

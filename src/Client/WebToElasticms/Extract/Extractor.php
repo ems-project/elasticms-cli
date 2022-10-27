@@ -7,6 +7,7 @@ namespace App\Client\WebToElasticms\Extract;
 use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Config\Computer;
 use App\Client\WebToElasticms\Config\ConfigManager;
+use App\Client\WebToElasticms\Config\Document as ConfigDocument;
 use App\Client\WebToElasticms\Config\WebResource;
 use App\Client\WebToElasticms\Helper\ExpressionData;
 use App\Client\WebToElasticms\Helper\Url;
@@ -107,10 +108,10 @@ class Extractor
 
             $type = $this->config->getType($document->getType());
             foreach ($type->getComputers() as $computer) {
-                if (!$this->condition($computer, $data)) {
+                if (!$this->condition($computer, $data, $document)) {
                     continue;
                 }
-                $value = $this->compute($computer, $data);
+                $value = $this->compute($computer, $data, $document);
                 $this->assignComputedProperty($computer, $data, $value);
             }
 
@@ -129,7 +130,7 @@ class Extractor
     /**
      * @param array<mixed> $data
      */
-    private function extractDataFromResource(\App\Client\WebToElasticms\Config\Document $document, WebResource $resource, array &$data): void
+    private function extractDataFromResource(ConfigDocument $document, WebResource $resource, array &$data): void
     {
         $result = $this->cache->get($resource->getUrl());
         $analyzer = $this->config->getAnalyzer($resource->getType());
@@ -146,10 +147,11 @@ class Extractor
     /**
      * @param array<mixed> $data
      */
-    private function condition(Computer $computer, array &$data): bool
+    private function condition(Computer $computer, array &$data, ConfigDocument $document): bool
     {
         $condition = $this->expressionLanguage->evaluate($computer->getCondition(), $context = [
             'data' => new ExpressionData($data),
+            'resources' => $document,
         ]);
         if (!\is_bool($condition)) {
             throw new \RuntimeException(\sprintf('Condition "%s" must return a boolean', $computer->getCondition()));
@@ -163,10 +165,11 @@ class Extractor
      *
      * @return mixed
      */
-    private function compute(Computer $computer, array &$data)
+    private function compute(Computer $computer, array &$data, ConfigDocument $document)
     {
         $value = $this->expressionLanguage->evaluate($computer->getExpression(), $context = [
             'data' => new ExpressionData($data),
+            'resources' => $document,
         ]);
 
         if ($computer->isJsonDecode() && \is_string($value)) {

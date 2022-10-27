@@ -105,6 +105,29 @@ The JSON config file list all web resources to synchronise for each document.
   ],
   "validClasses": ["toc"],
   "linkToClean": ["/^\\/fr\\/glossaire/"],
+  "types": [
+    {
+      "defaultData": [],
+      "name": "infopage",
+      "computers": [
+        {
+          "property": "[en][show]",
+          "expression": "data.get('en.title') !== null",
+          "jsonDecode": false,
+          "condition": "true"
+        },
+        {
+          "property": "[en][aspx_url]",
+          "expression": "resources.getPathFor('en')",
+          "jsonDecode": false,
+          "condition": "true"
+        }
+      ],
+      "tempFields": [
+        "temp"
+      ]
+    }
+  ],
   "urlsNotFound": [
     "\/fr\/page-not-found"
   ],
@@ -195,4 +218,5 @@ Functions available:
 
 Variable available
  - `data` an instance of [ExpressionData](src/Client/WebToElasticms/Helper/ExpressionData.php)
+ - `resources` an instance of [DocumentResources](src/Client/WebToElasticms/Helper/DocumentResources.php)
 
