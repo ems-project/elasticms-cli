@@ -118,7 +118,7 @@ The JSON config file list all web resources to synchronise for each document.
         },
         {
           "property": "[en][aspx_url]",
-          "expression": "resources.getPathFor('en')",
+          "expression": "document.getResourcePathFor('en')",
           "jsonDecode": false,
           "condition": "true"
         },
@@ -236,5 +236,5 @@ Functions available:
 
 Variable available
  - `data` an instance of [ExpressionData](src/Client/WebToElasticms/Helper/ExpressionData.php)
- - `resources` an instance of [DocumentResources](src/Client/WebToElasticms/Helper/DocumentResources.php)
+ - `document` an instance of [Document](src/Client/WebToElasticms/Config/Document.php)
 

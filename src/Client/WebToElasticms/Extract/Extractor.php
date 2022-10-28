@@ -151,7 +151,7 @@ class Extractor
     {
         $condition = $this->expressionLanguage->evaluate($computer->getCondition(), $context = [
             'data' => new ExpressionData($data),
-            'resources' => $document,
+            'document' => $document,
         ]);
         if (!\is_bool($condition)) {
             throw new \RuntimeException(\sprintf('Condition "%s" must return a boolean', $computer->getCondition()));
@@ -169,7 +169,7 @@ class Extractor
     {
         $value = $this->expressionLanguage->evaluate($computer->getExpression(), $context = [
             'data' => new ExpressionData($data),
-            'resources' => $document,
+            'document' => $document,
         ]);
 
         if ($computer->isJsonDecode() && \is_string($value)) {
