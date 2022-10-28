@@ -71,6 +71,17 @@ class Document
         return false;
     }
 
+    public function getResourceFor(string $locale): ?string
+    {
+        foreach ($this->resources as $resource) {
+            if ($resource->getLocale() === $locale) {
+                return $resource->getUrl();
+            }
+        }
+
+        return null;
+    }
+
     public function getResourcePathFor(string $locale): ?string
     {
         foreach ($this->resources as $resource) {

@@ -226,6 +226,15 @@ class ConfigManager
         return $results;
     }
 
+    public function findDataLinkString(string $path, string $type = ''): ?string
+    {
+        if (!empty($type) && isset($this->datalinksByUrl[$type][$path])) {
+            return $this->datalinksByUrl[$type][$path];
+        }
+
+        return null;
+    }
+
     /**
      * @return string[]
      */
@@ -404,10 +413,10 @@ class ConfigManager
             return (null === $pattern || null === $str) ? null : \preg_split($pattern, $str, $limit, $flags);
         });
 
-        $this->expressionLanguage->register('datalinks', function ($array, $type) {
-            return \sprintf('((null === %1$s || null === %2$s) ? null : \\$this->findDataLinksArray(%1$s, %2$s))', '$array', $type);
-        }, function ($arguments, $array, $type) {
-            return (null === $array || null === $type) ? null : $this->findDataLinksArray($array, $type);
+        $this->expressionLanguage->register('datalinks', function ($value, $type) {
+            return \sprintf('((null === %1$s || null === %2$s) ? null : (is_array($value) ? \\$this->findDataLinksArray(%1$s, %2$s): $this->findDataLinkString(%1$s, %2$s)))', '$array', $type);
+        }, function ($arguments, $value, $type) {
+            return (null === $value || null === $type) ? null : (\is_array($value) ? $this->findDataLinksArray($value, $type) : $this->findDataLinkString($value, $type));
         });
 
         return $this->expressionLanguage;
