@@ -210,6 +210,32 @@ class ConfigManager
     }
 
     /**
+     * @param string[] $paths
+     *
+     * @return string[]
+     */
+    public function findDataLinksArray(array $paths, string $type = ''): array
+    {
+        $results = [];
+        foreach ($paths as $path) {
+            if (!empty($type) && isset($this->datalinksByUrl[$type][$path])) {
+                $results[] = $this->datalinksByUrl[$type][$path];
+            }
+        }
+
+        return $results;
+    }
+
+    public function findDataLinkString(string $path, string $type = ''): ?string
+    {
+        if (!empty($type) && isset($this->datalinksByUrl[$type][$path])) {
+            return $this->datalinksByUrl[$type][$path];
+        }
+
+        return null;
+    }
+
+    /**
      * @return string[]
      */
     public function getValidClasses(): array
@@ -379,6 +405,18 @@ class ConfigManager
             return \sprintf('((null === %1$s || null === %2$s || null === %3$s || null === %4$s || null === %5$s) ? null : \\App\\ExpressionLanguage\\Functions::domToJsonMenu(%1$s, %2$s, %3$s, %4$s, %5$s))', $html, $tag, $fieldName, $typeName, $labelField);
         }, function ($arguments, $html, $tag, $fieldName, $typeName, $labelField) {
             return (null === $html || null === $tag || null === $fieldName || null === $typeName || null === $labelField) ? null : \App\ExpressionLanguage\Functions::domToJsonMenu($html, $tag, $fieldName, $typeName, $labelField);
+        });
+
+        $this->expressionLanguage->register('split', function ($pattern, $str, $limit = -1, $flags = PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) {
+            return \sprintf('((null === %1$s || null === %2$s) ? null : \\preg_split(%1$s, %2$s, %3$d, %4$d))', $pattern, $str, $limit, $flags);
+        }, function ($arguments, $pattern, $str, $limit = -1, $flags = PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) {
+            return (null === $pattern || null === $str) ? null : \preg_split($pattern, $str, $limit, $flags);
+        });
+
+        $this->expressionLanguage->register('datalinks', function ($value, $type) {
+            return \sprintf('((null === %1$s || null === %2$s) ? null : (is_array($value) ? \\$this->findDataLinksArray(%1$s, %2$s): $this->findDataLinkString(%1$s, %2$s)))', '$array', $type);
+        }, function ($arguments, $value, $type) {
+            return (null === $value || null === $type) ? null : (\is_array($value) ? $this->findDataLinksArray($value, $type) : $this->findDataLinkString($value, $type));
         });
 
         return $this->expressionLanguage;

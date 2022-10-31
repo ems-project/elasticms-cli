@@ -121,6 +121,12 @@ The JSON config file list all web resources to synchronise for each document.
           "expression": "resources.getPathFor('en')",
           "jsonDecode": false,
           "condition": "true"
+        },
+        {
+          "property": "[themes]",
+          "expression": "data.get('themes') == '' ? null : datalinks(split('/([a-zA-Z\u00e9\u00e8\u00e0\\-][a-zA-Z \u00e9\u00e8\u00e0\\-]+)\\\\|[0-9a-f]{8}\\-[0-9a-f]{4}\\-[0-9a-f]{4}\\-[0-9a-f]{4}\\-[0-9a-f]{12} */',data.get('themes')),'taxonomy')",
+          "jsonDecode": false,
+          "condition": "true"
         }
       ],
       "tempFields": [
@@ -149,6 +155,16 @@ The JSON config file list all web resources to synchronise for each document.
     "link": {
       "https://www.socialsecurity.be/citizen/fr/static/infos/general/index.htm": "link:X2AZan8BEIZ5tnyYFMjp",
       "https://www.socialsecurity.be/citizen/nl/static/infos/general/index.htm": "link:X2AZan8BEIZ5tnyYFMjp"
+    }, 
+    "taxonomy": {
+      "Professionnel de la sant\u00e9": "taxonomy:225a10bd9a798223bebd6706ff33d906612db064",
+      "Zorgverlener": "taxonomy:225a10bd9a798223bebd6706ff33d906612db064",
+      "Fournisseurs de logiciels": "taxonomy:c9351d239bc898074b1d792719a13aa88d10db1a",
+      "Softwareleveranciers": "taxonomy:c9351d239bc898074b1d792719a13aa88d10db1a",
+      "Accidents m\u00e9dicaux": "taxonomy:3544b80796d20c4c2dbee140f362cfdd64f5e5c1",
+      "Medische ongevallen": "taxonomy:3544b80796d20c4c2dbee140f362cfdd64f5e5c1",
+      "Contr\u00f4le": "taxonomy:e988877e606a48a1886f7c89a1ac5c1e463e2e31",
+      "Controle": "taxonomy:e988877e606a48a1886f7c89a1ac5c1e463e2e31"
     }
   },
   "cleanTags": [
@@ -215,6 +231,8 @@ Functions available:
    - `typeName`: The item's type (see in the JSONNestedMenu configuration)
    - `labelField`: May also copy the label into another object text field
    - Example `dom_to_json_menu(data.get('temp.fr.body'), 'h2', 'body', 'paragraph', 'title')`
+ - `split(pattern, str, limit = -1, flags = PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY)`: Split string by a regular expression (preg_split)
+ - `datalinks(array, type)`: find each key=>value in dataLinksByUrl[type]
 
 Variable available
  - `data` an instance of [ExpressionData](src/Client/WebToElasticms/Helper/ExpressionData.php)
