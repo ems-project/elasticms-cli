@@ -419,10 +419,10 @@ class ConfigManager
             return (null === $value || null === $type) ? null : (\is_array($value) ? $this->findDataLinksArray($value, $type) : $this->findDataLinkString($value, $type));
         });
 
-        $this->expressionLanguage->register('json_menu_nested', function ($values, $fieldName, $typeName, $labels = null, $labelField = null, $multiplex = false) {
+        $this->expressionLanguage->register('list_to_json_menu_nested', function ($values, $fieldName, $typeName, $labels = null, $labelField = null, $multiplex = false) {
             return \sprintf('((null === %1$s || null === %2$s || null === %3$s) ? null : \\App\\ExpressionLanguage\\Functions::jsonMenuNested(%1$s, %2$s, %3$s, %4$s, %5$s, %6$s))', \strval($values), $fieldName, $typeName, \strval($labels), $labelField, \strval($multiplex));
         }, function ($arguments, $values, $fieldName, $typeName, $labels = null, $labelField = null, $multiplex = false) {
-            return (null === $values || null === $fieldName || null === $typeName) ? null : \App\ExpressionLanguage\Functions::jsonMenuNested($values, $fieldName, $typeName, $labels, $labelField, $multiplex);
+            return (null === $values || null === $fieldName || null === $typeName) ? null : \App\ExpressionLanguage\Functions::listToJsonMenuNested($values, $fieldName, $typeName, $labels, $labelField, $multiplex);
         });
 
         return $this->expressionLanguage;

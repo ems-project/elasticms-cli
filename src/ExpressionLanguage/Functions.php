@@ -96,7 +96,7 @@ class Functions
      * @param array<string, string[]> $values,
      * @param array<string, string[]> $labels
      */
-    public static function jsonMenuNested(array $values, string $fieldName, string $typeName, ?array $labels, ?string $labelField, bool $multiplex = false): string
+    public static function listToJsonMenuNested(array $values, string $fieldName, string $typeName, ?array $labels, ?string $labelField, bool $multiplex = false): string
     {
         $data = [];
         if ($multiplex) {

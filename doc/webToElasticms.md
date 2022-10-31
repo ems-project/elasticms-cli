@@ -150,7 +150,7 @@ The JSON config file list all web resources to synchronise for each document.
         },
         {
           "property": "[links]",
-          "expression": "json_menu_nested(data.get('temp.links'), 'link_url', 'link', data.get('temp.links_label'), 'label', true)",
+          "expression": "list_to_json_menu_nested(data.get('temp.links'), 'link_url', 'link', data.get('temp.links_label'), 'label', true)",
           "jsonDecode": false,
           "condition": "true"
         }
@@ -259,15 +259,16 @@ Functions available:
    - Example `dom_to_json_menu(data.get('temp.fr.body'), 'h2', 'body', 'paragraph', 'title')`
  - `split(pattern, str, limit = -1, flags = PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY)`: Split string by a regular expression (preg_split)
  - `datalinks(values, type)`: values(string|array) find each key=>value in `dataLinksByUrl[type]`
- - `json_menu_nested(values, fieldName, typeName, labels, labelFields, multiplex)`:
+ - `list_to_json_menu_nested(values, fieldName, typeName, labels, labelFields, multiplex)`:
    - `values`: Array of values
    - `fieldName`: The item object's field
    - `typeName`: The item's type (see in the JSONNestedMenu configuration)
    - `labels`: Array of labels (corresponding to array of values)
    - `labelField`: May also copy the label into another object text field
    - `multiplex`: Boolean - indicates if include in multiplex field (need to extract locale in last position `[temp][links][%locale%]`)
-   - Example `json_menu_nested(data.get('temp.links'), 'link_url', 'link', data.get('temp.links_label'), 'label', true)`
-   Variable available
+   - Example `list_to_json_menu_nested(data.get('temp.links'), 'link_url', 'link', data.get('temp.links_label'), 'label', true)`
+   
+Variable available
  - `data` an instance of [ExpressionData](src/Client/WebToElasticms/Helper/ExpressionData.php)
  - `document` an instance of [Document](src/Client/WebToElasticms/Config/Document.php)
 
