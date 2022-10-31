@@ -94,6 +94,20 @@ The JSON config file list all web resources to synchronise for each document.
           ],
           "attribute": null,
           "strategy": "n"
+        },
+        {
+          "selector": "#slwp_ctl00_PlaceHolderLeftNavBar_PlaceHolderQuickLaunchBottom_page_navigation_pagelinks_page_navigation_pagelinks > div > div > ul > li > div > a",
+          "property": "[temp][links][%locale%]",
+          "filters": [],
+          "attribute": "href",
+          "strategy": "n"
+        },
+        {
+          "selector": "#slwp_ctl00_PlaceHolderLeftNavBar_PlaceHolderQuickLaunchBottom_page_navigation_pagelinks_page_navigation_pagelinks > div > div > ul > li > div > a",
+          "property": "[temp][links_label][%locale%]",
+          "filters": [],
+          "attribute": null,
+          "strategy": "n"
         }
       ]
     },
@@ -131,6 +145,12 @@ The JSON config file list all web resources to synchronise for each document.
         {
           "property": "[themes]",
           "expression": "data.get('themes') == '' ? null : datalinks(split('/([a-zA-Z\u00e9\u00e8\u00e0\\-][a-zA-Z \u00e9\u00e8\u00e0\\-]+)\\\\|[0-9a-f]{8}\\-[0-9a-f]{4}\\-[0-9a-f]{4}\\-[0-9a-f]{4}\\-[0-9a-f]{12} */',data.get('themes')),'taxonomy')",
+          "jsonDecode": false,
+          "condition": "true"
+        },
+        {
+          "property": "[links]",
+          "expression": "json_menu_nested(data.get('temp.links'), 'link_url', 'link', data.get('temp.links_label'), 'label', true)",
           "jsonDecode": false,
           "condition": "true"
         }
@@ -238,9 +258,16 @@ Functions available:
    - `labelField`: May also copy the label into another object text field
    - Example `dom_to_json_menu(data.get('temp.fr.body'), 'h2', 'body', 'paragraph', 'title')`
  - `split(pattern, str, limit = -1, flags = PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY)`: Split string by a regular expression (preg_split)
- - `datalinks(array, type)`: find each key=>value in dataLinksByUrl[type]
-
-Variable available
+ - `datalinks(values, type)`: values(string|array) find each key=>value in `dataLinksByUrl[type]`
+ - `json_menu_nested(values, fieldName, typeName, labels, labelFields, multiplex)`:
+   - `values`: Array of values
+   - `fieldName`: The item object's field
+   - `typeName`: The item's type (see in the JSONNestedMenu configuration)
+   - `labels`: Array of labels (corresponding to array of values)
+   - `labelField`: May also copy the label into another object text field
+   - `multiplex`: Boolean - indicates if include in multiplex field (need to extract locale in last position `[temp][links][%locale%]`)
+   - Example `json_menu_nested(data.get('temp.links'), 'link_url', 'link', data.get('temp.links_label'), 'label', true)`
+   Variable available
  - `data` an instance of [ExpressionData](src/Client/WebToElasticms/Helper/ExpressionData.php)
  - `document` an instance of [Document](src/Client/WebToElasticms/Config/Document.php)
 
