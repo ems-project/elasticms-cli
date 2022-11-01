@@ -2,6 +2,7 @@
 
 namespace App\Command\Photos;
 
+use App\Client\Photos\ApplePhotosLibrary;
 use App\Commands;
 use EMS\CommonBundle\Common\Admin\AdminHelper;
 use EMS\CommonBundle\Common\Command\AbstractCommand;
@@ -51,6 +52,12 @@ class ApplePhotosMigrationCommand extends AbstractCommand
             return self::EXECUTE_ERROR;
         }
         $this->io->title(\sprintf('Start migrating Apple Photos Library %s', $this->applePhotosPathPath));
+
+        $library = new ApplePhotosLibrary($this->applePhotosPathPath);
+        $progressBar = $this->io->createProgressBar($library->photosCount());
+        foreach ($library->getPhotos() as $photo) {
+            $progressBar->advance();
+        }
 
         return self::EXECUTE_SUCCESS;
     }

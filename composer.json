@@ -8,6 +8,7 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "ext-json": "*",
+        "ext-sqlite3": "*",
         "doctrine/doctrine-migrations-bundle": "^3.2",
         "elasticms/common-bundle": "^2.0",
         "kevinrob/guzzle-cache-middleware": "^4.0",
