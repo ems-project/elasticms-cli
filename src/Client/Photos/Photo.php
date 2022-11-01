@@ -14,6 +14,8 @@ class Photo
      * @var mixed[]|null
      */
     private ?array $originalFile = null;
+    /** @var mixed[][] */
+    private array $memberOf = [];
 
     public function __construct(string $libraryType, string $source, string $ouuid, string $filename)
     {
@@ -34,11 +36,12 @@ class Photo
     public function getData(): array
     {
         return \array_filter([
-            'library-type' => $this->libraryType,
+            'library_type' => $this->libraryType,
             'source' => $this->source,
             'filename' => $this->filename,
-            'preview-file' => $this->previewFile,
-            'original-file' => $this->originalFile,
+            'preview_file' => $this->previewFile,
+            'original_file' => $this->originalFile,
+            'member_of' => $this->memberOf,
         ]);
     }
 
@@ -56,5 +59,13 @@ class Photo
     public function setOriginalFile(array $originalFile): void
     {
         $this->originalFile = $originalFile;
+    }
+
+    /**
+     * @param mixed[] $memberOf
+     */
+    public function addMemberOf(array $memberOf): void
+    {
+        $this->memberOf = \array_merge($this->memberOf, $memberOf);
     }
 }

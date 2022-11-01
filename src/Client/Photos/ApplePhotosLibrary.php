@@ -44,6 +44,7 @@ class ApplePhotosLibrary implements PhotosLibraryInterface
     {
         $additionalInfo = $this->getAdditionalInfo($row['Z_PK']);
         $photo = new Photo('ApplePhotos', $this->libraryPath, \strtolower($row['ZUUID']), $additionalInfo['ZORIGINALFILENAME']);
+        $photo->addMemberOf($this->getAlbums($row['Z_PK']));
 
         return $photo;
     }
@@ -86,5 +87,30 @@ class ApplePhotosLibrary implements PhotosLibraryInterface
         }
 
         return null;
+    }
+
+    /**
+     * @return mixed[][]
+     */
+    private function getAlbums(int $assetId): array
+    {
+        $results = $this->photosDatabase->query("SELECT * FROM Z_28ASSETS, ZGENERICALBUM WHERE Z_3ASSETS = $assetId AND Z_PK = Z_28ALBUMS");
+        if (false === $results) {
+            throw new \RuntimeException('Unexpected false result');
+        }
+        $albums = [];
+        while ($row = $results->fetchArray()) {
+            if (!isset($row['ZTITLE'])) {
+                continue;
+            }
+            $albums[] = [
+                'type' => 'album',
+                'name' => $row['ZTITLE'],
+                'parent' => 'photo_album:'.\strtolower($row['ZUUID']),
+                'order' => $row['Z_FOK_3ASSETS'],
+            ];
+        }
+
+        return $albums;
     }
 }
