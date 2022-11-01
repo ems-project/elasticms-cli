@@ -32,7 +32,7 @@ abstract class AbstractPhotosMigrationCommand extends AbstractCommand
     {
         parent::initialize($input, $output);
         $this->logger = new ConsoleLogger($output);
-        $this->contentTypeName = $this->getArgumentString(self::OPTION_CONTENT_TYPE_NAME);
+        $this->contentTypeName = $this->getOptionString(self::OPTION_CONTENT_TYPE_NAME);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
