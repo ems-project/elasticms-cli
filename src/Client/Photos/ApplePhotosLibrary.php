@@ -27,9 +27,35 @@ class ApplePhotosLibrary implements PhotosLibraryInterface
         if (false === $results) {
             throw new \RuntimeException('Unexpected false result');
         }
-        while ($row = $results->fetchArray()) {
-            $photo = new Photo();
-            yield $photo;
+        while ($tmpRow = $results->fetchArray()) {
+            /** @var array{Z_PK: int, ZUUID: string} $row */
+            $row = $tmpRow;
+            yield $this->generatePhoto($row);
         }
+    }
+
+    /**
+     * @param array{Z_PK: int, ZUUID: string} $row
+     */
+    private function generatePhoto(array $row): Photo
+    {
+        $additionalInfo = $this->getAdditionalInfo($row['Z_PK']);
+        $photo = new Photo(\strtolower($row['ZUUID']), $additionalInfo['ZORIGINALFILENAME']);
+
+        return $photo;
+    }
+
+    /**
+     * @return array{ZORIGINALFILENAME: string}
+     */
+    private function getAdditionalInfo(int $assetId): array
+    {
+        /** @var array{ZORIGINALFILENAME: string} $result */
+        $result = $this->photosDatabase->querySingle("SELECT * FROM ZADDITIONALASSETATTRIBUTES WHERE ZASSET = $assetId", true);
+        if (!\is_array($result)) {
+            throw new \RuntimeException('Unexpected not array result');
+        }
+
+        return $result;
     }
 }
