@@ -2,13 +2,16 @@
 
 namespace App\Command\Photos;
 
+use App\Client\Photos\Photo;
 use App\Client\Photos\PhotosLibraryInterface;
 use EMS\CommonBundle\Common\Admin\AdminHelper;
 use EMS\CommonBundle\Common\Command\AbstractCommand;
+use EMS\CommonBundle\Helper\EmsFields;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Mime\MimeTypes;
 
 abstract class AbstractPhotosMigrationCommand extends AbstractCommand
 {
@@ -16,11 +19,14 @@ abstract class AbstractPhotosMigrationCommand extends AbstractCommand
     private AdminHelper $adminHelper;
     private ConsoleLogger $logger;
     private string $contentTypeName;
+    private PhotosLibraryInterface $library;
+    private MimeTypes $mimeTypes;
 
     public function __construct(AdminHelper $adminHelper)
     {
         parent::__construct();
         $this->adminHelper = $adminHelper;
+        $this->mimeTypes = new MimeTypes();
     }
 
     protected function configure(): void
@@ -43,10 +49,11 @@ abstract class AbstractPhotosMigrationCommand extends AbstractCommand
             return self::EXECUTE_ERROR;
         }
 
-        $library = $this->getLibrary();
+        $this->library = $this->getLibrary();
         $dataApi = $this->adminHelper->getCoreApi()->data($this->contentTypeName);
-        $progressBar = $this->io->createProgressBar($library->photosCount());
-        foreach ($library->getPhotos() as $photo) {
+        $progressBar = $this->io->createProgressBar($this->library->photosCount());
+        foreach ($this->library->getPhotos() as $photo) {
+            $this->uploadPreview($photo);
             $dataApi->save($photo->getOuuid(), $photo->getData());
             $progressBar->advance();
         }
@@ -55,4 +62,20 @@ abstract class AbstractPhotosMigrationCommand extends AbstractCommand
     }
 
     abstract protected function getLibrary(): PhotosLibraryInterface;
+
+    private function uploadPreview(Photo $photo): void
+    {
+        $previewFile = $this->library->getPreviewFile($photo);
+        if (null === $previewFile) {
+            return;
+        }
+        $mimeType = $this->mimeTypes->guessMimeType($previewFile->getPathname()) ?? 'application/bin';
+        $hash = $this->adminHelper->getCoreApi()->file()->uploadFile($previewFile->getPathname(), $previewFile->getFilename(), $mimeType);
+        $photo->setPreviewFile([
+            EmsFields::CONTENT_FILE_HASH_FIELD => $hash,
+            EmsFields::CONTENT_FILE_NAME_FIELD => $previewFile->getFilename(),
+            EmsFields::CONTENT_MIME_TYPE_FIELD => $mimeType,
+            EmsFields::CONTENT_FILE_SIZE_FIELD => $previewFile->getSize(),
+        ]);
+    }
 }

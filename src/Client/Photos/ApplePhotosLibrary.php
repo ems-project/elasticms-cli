@@ -2,6 +2,9 @@
 
 namespace App\Client\Photos;
 
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
+
 class ApplePhotosLibrary implements PhotosLibraryInterface
 {
     private string $libraryPath;
@@ -57,5 +60,18 @@ class ApplePhotosLibrary implements PhotosLibraryInterface
         }
 
         return $result;
+    }
+
+    public function getPreviewFile(Photo $photo): ?SplFileInfo
+    {
+        $zuuid = \strtoupper($photo->getOuuid());
+        $firstChar = \substr($zuuid, 0, 1);
+        $finder = new Finder();
+        $finder->name("$zuuid*");
+        foreach ($finder->in("$this->libraryPath/resources/derivatives/$firstChar") as $file) {
+            return $file;
+        }
+
+        return null;
     }
 }
