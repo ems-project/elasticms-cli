@@ -6,9 +6,13 @@ class Photo
 {
     private string $ouuid;
     private string $filename;
+    private string $libraryType;
+    private string $source;
 
-    public function __construct(string $ouuid, string $filename)
+    public function __construct(string $libraryType, string $source, string $ouuid, string $filename)
     {
+        $this->libraryType = $libraryType;
+        $this->source = $source;
         $this->ouuid = $ouuid;
         $this->filename = $filename;
     }
@@ -21,9 +25,11 @@ class Photo
     /**
      * @return mixed[]
      */
-    public function getJson(): array
+    public function getData(): array
     {
         return [
+            'library-type' => $this->libraryType,
+            'source' => $this->source,
             'filename' => $this->filename,
         ];
     }

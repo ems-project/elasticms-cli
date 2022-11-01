@@ -40,7 +40,7 @@ class ApplePhotosLibrary implements PhotosLibraryInterface
     private function generatePhoto(array $row): Photo
     {
         $additionalInfo = $this->getAdditionalInfo($row['Z_PK']);
-        $photo = new Photo(\strtolower($row['ZUUID']), $additionalInfo['ZORIGINALFILENAME']);
+        $photo = new Photo('ApplePhotos', $this->libraryPath, \strtolower($row['ZUUID']), $additionalInfo['ZORIGINALFILENAME']);
 
         return $photo;
     }
