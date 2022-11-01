@@ -14,4 +14,6 @@ interface PhotosLibraryInterface
     public function getPhotos(): iterable;
 
     public function getPreviewFile(Photo $photo): ?SplFileInfo;
+
+    public function getOriginalFile(Photo $photo): ?SplFileInfo;
 }

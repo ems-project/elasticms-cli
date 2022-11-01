@@ -15,12 +15,14 @@ use Symfony\Component\Mime\MimeTypes;
 
 abstract class AbstractPhotosMigrationCommand extends AbstractCommand
 {
-    public const OPTION_CONTENT_TYPE_NAME = 'content-type-name';
+    private const OPTION_CONTENT_TYPE_NAME = 'content-type-name';
+    private const OPTION_UPLOAD_ORIGINAL = 'upload-original';
     private AdminHelper $adminHelper;
     private ConsoleLogger $logger;
     private string $contentTypeName;
     private PhotosLibraryInterface $library;
     private MimeTypes $mimeTypes;
+    private bool $uploadOriginal;
 
     public function __construct(AdminHelper $adminHelper)
     {
@@ -32,6 +34,7 @@ abstract class AbstractPhotosMigrationCommand extends AbstractCommand
     protected function configure(): void
     {
         $this->addOption(self::OPTION_CONTENT_TYPE_NAME, null, InputOption::VALUE_OPTIONAL, 'Content type name in elasticms', 'photo');
+        $this->addOption(self::OPTION_UPLOAD_ORIGINAL, null, InputOption::VALUE_NONE, 'Uploads original file');
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output): void
@@ -39,6 +42,7 @@ abstract class AbstractPhotosMigrationCommand extends AbstractCommand
         parent::initialize($input, $output);
         $this->logger = new ConsoleLogger($output);
         $this->contentTypeName = $this->getOptionString(self::OPTION_CONTENT_TYPE_NAME);
+        $this->uploadOriginal = $this->getOptionBool(self::OPTION_UPLOAD_ORIGINAL);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -54,6 +58,9 @@ abstract class AbstractPhotosMigrationCommand extends AbstractCommand
         $progressBar = $this->io->createProgressBar($this->library->photosCount());
         foreach ($this->library->getPhotos() as $photo) {
             $this->uploadPreview($photo);
+            if ($this->uploadOriginal) {
+                $this->uploadOriginal($photo);
+            }
             $dataApi->save($photo->getOuuid(), $photo->getData());
             $progressBar->advance();
         }
@@ -69,13 +76,31 @@ abstract class AbstractPhotosMigrationCommand extends AbstractCommand
         if (null === $previewFile) {
             return;
         }
-        $mimeType = $this->mimeTypes->guessMimeType($previewFile->getPathname()) ?? 'application/bin';
-        $hash = $this->adminHelper->getCoreApi()->file()->uploadFile($previewFile->getPathname(), $previewFile->getFilename(), $mimeType);
-        $photo->setPreviewFile([
+        $photo->setPreviewFile($this->uploadFile($previewFile));
+    }
+
+    private function uploadOriginal(Photo $photo): void
+    {
+        $originalFile = $this->library->getOriginalFile($photo);
+        if (null === $originalFile) {
+            return;
+        }
+        $photo->setOriginalFile($this->uploadFile($originalFile));
+    }
+
+    /**
+     * @return mixed[]
+     */
+    private function uploadFile(\SplFileInfo $file): array
+    {
+        $mimeType = $this->mimeTypes->guessMimeType($file->getPathname()) ?? 'application/bin';
+        $hash = $this->adminHelper->getCoreApi()->file()->uploadFile($file->getPathname(), $file->getFilename(), $mimeType);
+
+        return [
             EmsFields::CONTENT_FILE_HASH_FIELD => $hash,
-            EmsFields::CONTENT_FILE_NAME_FIELD => $previewFile->getFilename(),
+            EmsFields::CONTENT_FILE_NAME_FIELD => $file->getFilename(),
             EmsFields::CONTENT_MIME_TYPE_FIELD => $mimeType,
-            EmsFields::CONTENT_FILE_SIZE_FIELD => $previewFile->getSize(),
-        ]);
+            EmsFields::CONTENT_FILE_SIZE_FIELD => $file->getSize(),
+        ];
     }
 }

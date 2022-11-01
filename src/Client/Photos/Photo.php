@@ -10,6 +10,10 @@ class Photo
     private string $source;
     /** @var mixed[]|null */
     private ?array $previewFile = null;
+    /**
+     * @var mixed[]|null
+     */
+    private ?array $originalFile = null;
 
     public function __construct(string $libraryType, string $source, string $ouuid, string $filename)
     {
@@ -34,6 +38,7 @@ class Photo
             'source' => $this->source,
             'filename' => $this->filename,
             'preview-file' => $this->previewFile,
+            'original-file' => $this->originalFile,
         ]);
     }
 
@@ -43,5 +48,13 @@ class Photo
     public function setPreviewFile(array $previewFile): void
     {
         $this->previewFile = $previewFile;
+    }
+
+    /**
+     * @param mixed[] $originalFile
+     */
+    public function setOriginalFile(array $originalFile): void
+    {
+        $this->originalFile = $originalFile;
     }
 }

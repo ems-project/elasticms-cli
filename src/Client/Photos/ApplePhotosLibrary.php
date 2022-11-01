@@ -74,4 +74,17 @@ class ApplePhotosLibrary implements PhotosLibraryInterface
 
         return null;
     }
+
+    public function getOriginalFile(Photo $photo): ?SplFileInfo
+    {
+        $zuuid = \strtoupper($photo->getOuuid());
+        $firstChar = \substr($zuuid, 0, 1);
+        $finder = new Finder();
+        $finder->name("$zuuid*");
+        foreach ($finder->in("$this->libraryPath/originals/$firstChar") as $file) {
+            return $file;
+        }
+
+        return null;
+    }
 }
