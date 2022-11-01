@@ -2,7 +2,7 @@
 
 namespace App\Client\Photos;
 
-class ApplePhotosLibrary
+class ApplePhotosLibrary implements PhotosLibraryInterface
 {
     private string $libraryPath;
     private \SQLite3 $photosDatabase;
