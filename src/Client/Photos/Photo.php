@@ -4,6 +4,7 @@ namespace App\Client\Photos;
 
 class Photo
 {
+    private const DATETIME_FORMAT = 'c';
     private string $ouuid;
     private string $filename;
     private string $libraryType;
@@ -16,6 +17,10 @@ class Photo
     private ?array $originalFile = null;
     /** @var mixed[][] */
     private array $memberOf = [];
+    private ?string $modificationDate = null;
+    private ?string $addedDate = null;
+    /** @var mixed[]|null */
+    private ?array $location = null;
 
     public function __construct(string $libraryType, string $source, string $ouuid, string $filename)
     {
@@ -42,6 +47,9 @@ class Photo
             'preview_file' => $this->previewFile,
             'original_file' => $this->originalFile,
             'member_of' => $this->memberOf,
+            'modification_date' => $this->modificationDate,
+            'added_date' => $this->addedDate,
+            'location' => $this->location,
         ]);
     }
 
@@ -67,5 +75,23 @@ class Photo
     public function addMemberOf(array $memberOf): void
     {
         $this->memberOf = \array_merge($this->memberOf, $memberOf);
+    }
+
+    public function setModificationDate(\DateTimeImmutable $dateTime): void
+    {
+        $this->modificationDate = $dateTime->format(self::DATETIME_FORMAT);
+    }
+
+    public function setAddedDate(\DateTimeImmutable $dateTime): void
+    {
+        $this->addedDate = $dateTime->format(self::DATETIME_FORMAT);
+    }
+
+    public function setLocationPoint(float $latitude, float $longitude): void
+    {
+        $this->location = [
+            'lat' => $latitude,
+            'lon' => $longitude,
+        ];
     }
 }

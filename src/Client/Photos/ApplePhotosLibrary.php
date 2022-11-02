@@ -26,41 +26,32 @@ class ApplePhotosLibrary implements PhotosLibraryInterface
      */
     public function getPhotos(): iterable
     {
-        $results = $this->photosDatabase->query('SELECT * FROM ZASSET');
+        $results = $this->photosDatabase->query('SELECT ASSET.Z_PK, ASSET.ZUUID, ASSET.ZANALYSISSTATEMODIFICATIONDATE, ASSET.ZADDEDDATE, ASSET.ZDATECREATED, ASSET.ZLATITUDE, ASSET.ZLONGITUDE, ATTR.ZORIGINALFILENAME FROM ZASSET ASSET, ZADDITIONALASSETATTRIBUTES ATTR WHERE ATTR.ZASSET = ASSET.Z_PK ORDER BY COALESCE(ASSET.ZANALYSISSTATEMODIFICATIONDATE, ASSET.ZADDEDDATE)  ASC');
         if (false === $results) {
             throw new \RuntimeException('Unexpected false result');
         }
         while ($tmpRow = $results->fetchArray()) {
-            /** @var array{Z_PK: int, ZUUID: string} $row */
+            /** @var array{Z_PK: int, ZUUID: string, ZORIGINALFILENAME: string, ZANALYSISSTATEMODIFICATIONDATE: float|null, ZADDEDDATE: float, ZDATECREATED: float|null, ZLATITUDE: float|null, ZLONGITUDE: float} $row */
             $row = $tmpRow;
             yield $this->generatePhoto($row);
         }
     }
 
     /**
-     * @param array{Z_PK: int, ZUUID: string} $row
+     * @param array{Z_PK: int, ZUUID: string, ZORIGINALFILENAME: string, ZANALYSISSTATEMODIFICATIONDATE: float|null, ZADDEDDATE: float, ZDATECREATED: float|null, ZLATITUDE: float|null, ZLONGITUDE: float} $row
      */
     private function generatePhoto(array $row): Photo
     {
-        $additionalInfo = $this->getAdditionalInfo($row['Z_PK']);
-        $photo = new Photo('ApplePhotos', $this->libraryPath, \strtolower($row['ZUUID']), $additionalInfo['ZORIGINALFILENAME']);
+        $photo = new Photo('ApplePhotos', $this->libraryPath, \strtolower($row['ZUUID']), $row['ZORIGINALFILENAME']);
+
+        $photo->setModificationDate($this->cocoaToDate($row['ZANALYSISSTATEMODIFICATIONDATE'] ?? $row['ZADDEDDATE']));
+        $photo->setAddedDate($this->cocoaToDate($row['ZADDEDDATE']));
         $photo->addMemberOf($this->getAlbums($row['Z_PK']));
-
-        return $photo;
-    }
-
-    /**
-     * @return array{ZORIGINALFILENAME: string}
-     */
-    private function getAdditionalInfo(int $assetId): array
-    {
-        /** @var array{ZORIGINALFILENAME: string} $result */
-        $result = $this->photosDatabase->querySingle("SELECT * FROM ZADDITIONALASSETATTRIBUTES WHERE ZASSET = $assetId", true);
-        if (!\is_array($result)) {
-            throw new \RuntimeException('Unexpected not array result');
+        if (-180.0 !== ($row['ZLATITUDE'] ?? -180.0) || -180.0 !== ($row['ZLONGITUDE'] ?? -180.0)) {
+            $photo->setLocationPoint($row['ZLATITUDE'] ?? -180.0, $row['ZLONGITUDE'] ?? -180.0);
         }
 
-        return $result;
+        return $photo;
     }
 
     public function getPreviewFile(Photo $photo): ?SplFileInfo
@@ -112,5 +103,15 @@ class ApplePhotosLibrary implements PhotosLibraryInterface
         }
 
         return $albums;
+    }
+
+    private function cocoaToDate(float $cocoaDate): \DateTimeImmutable
+    {
+        $date = \DateTimeImmutable::createFromFormat('U.u', \strval($cocoaDate + 978307200));
+        if (false === $date) {
+            throw new \RuntimeException("Unexpected false result: $cocoaDate");
+        }
+
+        return $date;
     }
 }
