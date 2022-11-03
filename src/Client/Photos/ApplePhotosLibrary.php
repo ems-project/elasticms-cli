@@ -107,7 +107,7 @@ class ApplePhotosLibrary implements PhotosLibraryInterface
 
     private function cocoaToDate(float $cocoaDate): \DateTimeImmutable
     {
-        $date = \DateTimeImmutable::createFromFormat('U.u', \strval($cocoaDate + 978307200));
+        $date = \DateTimeImmutable::createFromFormat('U.u', \sprintf('%F', $cocoaDate + 978307200));
         if (false === $date) {
             throw new \RuntimeException("Unexpected false result: $cocoaDate");
         }
