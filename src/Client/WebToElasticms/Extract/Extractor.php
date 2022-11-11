@@ -7,6 +7,7 @@ namespace App\Client\WebToElasticms\Extract;
 use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Config\Computer;
 use App\Client\WebToElasticms\Config\ConfigManager;
+use App\Client\WebToElasticms\Config\Document as WebDocument;
 use App\Client\WebToElasticms\Config\WebResource;
 use App\Client\WebToElasticms\Helper\ExpressionData;
 use App\Client\WebToElasticms\Helper\Url;
@@ -106,7 +107,7 @@ class Extractor
                 if (!$this->condition($computer, $data)) {
                     continue;
                 }
-                $value = $this->compute($computer, $data);
+                $value = $this->compute($computer, $data, $document);
                 $this->assignComputedProperty($computer, $data, $value);
             }
 
@@ -125,7 +126,7 @@ class Extractor
     /**
      * @param array<mixed> $data
      */
-    private function extractDataFromResource(\App\Client\WebToElasticms\Config\Document $document, WebResource $resource, array &$data): void
+    private function extractDataFromResource(WebDocument $document, WebResource $resource, array &$data): void
     {
         $result = $this->cache->get($resource->getUrl());
         $analyzer = $this->config->getAnalyzer($resource->getType());
@@ -162,10 +163,11 @@ class Extractor
      *
      * @return mixed
      */
-    private function compute(Computer $computer, array &$data)
+    private function compute(Computer $computer, array &$data, WebDocument $document)
     {
         $value = $this->expressionLanguage->evaluate($computer->getExpression(), $context = [
             'data' => new ExpressionData($data),
+            'document' => $document,
         ]);
 
         if ($computer->isJsonDecode() && \is_string($value)) {
