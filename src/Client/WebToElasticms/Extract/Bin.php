@@ -10,7 +10,6 @@ use App\Client\WebToElasticms\Config\ConfigManager;
 use App\Client\WebToElasticms\Config\Document;
 use App\Client\WebToElasticms\Config\WebResource;
 use App\Client\WebToElasticms\Rapport\Rapport;
-use GuzzleHttp\Psr7\Stream;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\PropertyAccess\PropertyAccess;
@@ -52,18 +51,5 @@ class Bin implements ExtractorInterface
     private function applyFilter(string $filter, StreamInterface $stream): StreamInterface
     {
         return $this->textToStream('foobar');
-    }
-
-    private function textToStream(string $text): StreamInterface
-    {
-        $resource = \fopen('php://memory', 'rw+');
-        if (false === $resource) {
-            throw new \RuntimeException('Unexpected false in memory file');
-        }
-        $stream = new Stream($resource);
-        $stream->write($text);
-        $stream->rewind();
-
-        return $stream;
     }
 }
