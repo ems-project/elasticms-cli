@@ -509,14 +509,4 @@ class ConfigManager
     {
         $this->lastUpdated = $lastUpdated;
     }
-
-    public function addDocument(string $url): void
-    {
-        $resource = new WebResource($url, 'en', 'default');
-        $document = new Document();
-        $document->setDefaultData([]);
-        $document->setType('audit');
-        $document->setResources([$resource]);
-        $this->documents[] = $document;
-    }
 }

@@ -25,7 +25,6 @@ class MigrationCommand extends AbstractCommand
 
     private const ARG_CONFIG_FILE_PATH = 'json-path';
     private const OPTION_CONTINUE = 'continue';
-    private const OPTION_AUTO_DISCOVER = 'auto-discover';
     private const ARG_OUUID = 'OUUID';
     public const OPTION_CACHE_FOLDER = 'cache-folder';
     public const OPTION_MAX_UPDATES = 'max-updates';
@@ -67,12 +66,6 @@ class MigrationCommand extends AbstractCommand
                 InputOption::VALUE_NONE,
                 'Continue import from last know updated document'
             )
-            ->addOption(
-                self::OPTION_AUTO_DISCOVER,
-                null,
-                InputOption::VALUE_NONE,
-                'Add unknown internal links as new documents'
-            )
             ->addArgument(self::ARG_OUUID, InputArgument::OPTIONAL, 'ouuid', null)
             ->addOption(self::OPTION_FORCE, null, InputOption::VALUE_NONE, 'force update all documents')
             ->addOption(self::OPTION_DRY_RUN, null, InputOption::VALUE_NONE, 'don\'t update elasticms')
@@ -93,7 +86,6 @@ class MigrationCommand extends AbstractCommand
         }
         $this->ouuid = $ouuid;
         $this->force = $this->getOptionBool(self::OPTION_FORCE);
-        $this->autoDiscover = $this->getOptionBool(self::OPTION_AUTO_DISCOVER);
         $this->continue = $this->getOptionBool(self::OPTION_CONTINUE);
         $this->dryRun = $this->getOptionBool(self::OPTION_DRY_RUN);
         $this->dump = $this->getOptionBool(self::OPTION_DUMP);
@@ -115,7 +107,7 @@ class MigrationCommand extends AbstractCommand
         $cacheManager = new CacheManager($this->cacheFolder);
         $configManager = $this->loadConfigManager($cacheManager);
         $rapport = new Rapport($cacheManager, $this->rapportsFolder);
-        $extractor = new Extractor($configManager, $cacheManager, $this->logger, $rapport, $this->autoDiscover);
+        $extractor = new Extractor($configManager, $cacheManager, $this->logger, $rapport);
         $updateManager = new UpdateManager($this->adminHelper->getCoreApi(), $configManager, $this->logger, $this->dryRun);
 
         $this->io->section('Start cleaning');
