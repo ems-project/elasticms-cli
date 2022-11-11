@@ -90,7 +90,6 @@ class AuditCommand extends AbstractCommand
 
             return self::EXECUTE_ERROR;
         }
-        $this->io->title(\sprintf('Starting auditing %s', $this->baseUrl->getUrl()));
 
         $this->io->section('Load config');
         $cacheManager = new CacheManager($this->cacheFolder);
@@ -103,10 +102,8 @@ class AuditCommand extends AbstractCommand
 //        if (!$this->continue) {
 //            $extractor->reset();
 //        }
-//
-//        $this->io->section('Start updates');
-//        $this->io->progressStart($extractor->extractDataCount());
-//        $this->io->progressAdvance($extractor->currentStep());
+
+        $this->io->title(\sprintf('Starting auditing %s', $this->baseUrl->getUrl()));
         $counter = 0;
         $finish = true;
         while ($this->auditCache->hasNext()) {
@@ -119,11 +116,10 @@ class AuditCommand extends AbstractCommand
                 $finish = false;
                 break;
             }
-//            $this->io->progressAdvance();
+            $this->auditCache->progress($output);
         }
-//        $this->io->progressFinish();
-//        $this->io->writeln('');
-//
+        $this->auditCache->progressFinish($output, $counter);
+
         $this->io->section('Save cache and rapport');
         $this->auditCache->save($this->jsonPath, $finish);
 //        $rapport->save();

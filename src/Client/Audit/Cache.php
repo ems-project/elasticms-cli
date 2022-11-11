@@ -8,6 +8,7 @@ use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Helper\Url;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
@@ -30,6 +31,7 @@ class Cache
     private LoggerInterface $logger;
     private ?int $lastUpdated = null;
     private int $current = -1;
+    private ?string $status = null;
 
     public function __construct(?CacheManager $cacheManager = null, ?Url $baseUrl = null, ?CoreApiInterface $coreApi = null, ?LoggerInterface $logger = null)
     {
@@ -162,5 +164,26 @@ class Cache
             return;
         }
         $this->urls[] = $url;
+    }
+
+    public function progress(OutputInterface $output): void
+    {
+        $this->rewindOutput($output);
+        $this->status = \sprintf('%d urls audited, %d urls pending, %d urls found', $this->current + 1, \count($this->urls) - $this->current - 1, \count($this->urls));
+        $output->write($this->status);
+    }
+
+    public function progressFinish(OutputInterface $output, int $counter): void
+    {
+        $this->rewindOutput($output);
+        $this->status = null;
+        $output->writeln(\sprintf('%d/%d urls have been audited', $counter, \count($this->urls)));
+    }
+
+    protected function rewindOutput(OutputInterface $output): void
+    {
+        if (null !== $this->status) {
+            $output->write(\sprintf("\033[%dD", \strlen($this->status)));
+        }
     }
 }
