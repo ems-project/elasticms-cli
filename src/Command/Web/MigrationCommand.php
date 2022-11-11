@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Command;
+namespace App\Command\Web;
 
 use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Config\ConfigManager;
@@ -19,7 +19,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class WebMigrationCommand extends AbstractCommand
+class MigrationCommand extends AbstractCommand
 {
     protected static $defaultName = Commands::WEB_MIGRATION;
 

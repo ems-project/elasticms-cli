@@ -96,7 +96,7 @@ class Functions
     public static function pa11y(string $url): string
     {
         $process = new Process(['pa11y', '-s', 'WCAG2AA', '-r', 'json', $url]);
-        $process->setTimeout(3*60.0);
+        $process->setTimeout(3 * 60.0);
         $process->setWorkingDirectory(__DIR__);
         $process->run(function () {
         }, [
