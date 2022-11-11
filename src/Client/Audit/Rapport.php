@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\HeaderUtils;
 class Rapport
 {
     /** @var string[][] */
-    private array $accessibilityErrors = [['URL', 'WCAG-AA']];
+    private array $accessibilityErrors = [['URL', 'WCAG2AA']];
     /** @var string[][] */
     private array $securityErrors = [['URL', 'Missing headers']];
     private string $filename;

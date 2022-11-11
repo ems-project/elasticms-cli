@@ -3,6 +3,7 @@
 namespace App\Client\Audit;
 
 use App\Client\HttpClient\HttpResult;
+use App\Helper\Pa11yWrapper;
 use EMS\CommonBundle\Contracts\CoreApi\Endpoint\Data\DataInterface;
 use Psr\Log\LoggerInterface;
 
@@ -13,6 +14,7 @@ class AuditManager
     private LoggerInterface $logger;
     private bool $dryRun;
     private bool $force;
+    private Pa11yWrapper $pa11yWrapper;
 
     public function __construct(DataInterface $dataApi, Rapport $rapport, LoggerInterface $logger, bool $dryRun, bool $force)
     {
@@ -21,12 +23,14 @@ class AuditManager
         $this->logger = $logger;
         $this->dryRun = $dryRun;
         $this->force = $force;
+        $this->pa11yWrapper = new Pa11yWrapper();
     }
 
     public function analyze(string $url, HttpResult $result, string $hash): void
     {
         $data = [];
         $this->auditSecurity($url, $data, $result);
+        $this->auditAccessibility($url, $data, $result);
     }
 
     /**
@@ -43,7 +47,7 @@ class AuditManager
             }
             $data['security'][] = [
                 'type' => 'missing-header',
-                'value' => '$header',
+                'value' => $header,
             ];
             $missingHeaders[] = $header;
         }
@@ -60,5 +64,34 @@ class AuditManager
         if (\count($missingHeaders) > 0) {
             $this->rapport->addSecurityError($url, \count($missingHeaders));
         }
+    }
+
+    /**
+     * @param mixed[] $data
+     */
+    private function auditAccessibility(string $url, array &$data, HttpResult $result): void
+    {
+        $pa11y = $this->pa11y($url, $data, $result);
+        if (\count($pa11y) > 0) {
+            $this->rapport->addAccessibilityError($url, \count($pa11y));
+        }
+    }
+
+    /**
+     * @param mixed[] $data
+     *
+     * @return mixed[]
+     */
+    private function pa11y(string $url, array &$data, HttpResult $result): array
+    {
+        if (0 !== \strpos($result->getMimetype(), 'text/html')) {
+            $this->logger->notice(\sprintf('Mimetype %s not supported to audit accessibility', $result->getMimetype()));
+
+            return [];
+        }
+        $this->pa11yWrapper->run($url);
+        $data['pa11y'] = $this->pa11yWrapper->getJson();
+
+        return $data['pa11y'];
     }
 }
