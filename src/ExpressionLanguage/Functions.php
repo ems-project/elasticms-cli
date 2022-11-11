@@ -2,9 +2,9 @@
 
 namespace App\ExpressionLanguage;
 
+use App\Helper\Pa11yWrapper;
 use EMS\CommonBundle\Common\Standard\Json;
 use Ramsey\Uuid\Uuid;
-use Symfony\Component\Process\Process;
 
 class Functions
 {
@@ -95,14 +95,9 @@ class Functions
 
     public static function pa11y(string $url): string
     {
-        $process = new Process(['pa11y', '-s', 'WCAG2AA', '-r', 'json', $url]);
-        $process->setTimeout(3 * 60.0);
-        $process->setWorkingDirectory(__DIR__);
-        $process->run(function () {
-        }, [
-            'LANG' => 'en_US.utf-8',
-        ]);
+        $wrapper = new Pa11yWrapper();
+        $wrapper->run($url);
 
-        return $process->getOutput();
+        return $wrapper->getOutput();
     }
 }

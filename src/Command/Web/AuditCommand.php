@@ -150,6 +150,8 @@ class AuditCommand extends AbstractCommand
     {
         if (0 !== \strpos($result->getMimetype(), 'text/html')) {
             $this->logger->notice(\sprintf('Mimetype %s not supported to extract internal links', $result->getMimetype()));
+
+            return;
         }
 
         $stream = $result->getResponse()->getBody();
