@@ -99,9 +99,9 @@ class AuditCommand extends AbstractCommand
 //        $updateManager = new UpdateManager($this->adminHelper->getCoreApi(), $configManager, $this->logger, $this->dryRun);
 //
 //
-//        if (!$this->continue) {
-//            $extractor->reset();
-//        }
+        if ($this->continue) {
+            $this->auditCache->reset();
+        }
 
         $this->io->title(\sprintf('Starting auditing %s', $this->baseUrl->getUrl()));
         $counter = 0;

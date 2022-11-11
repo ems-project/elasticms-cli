@@ -128,6 +128,7 @@ class Cache
 
     public function next(): string
     {
+        $this->lastUpdated = $this->current >= 0 ? $this->current : null;
         ++$this->current;
 
         return $this->current();
@@ -184,6 +185,13 @@ class Cache
     {
         if (null !== $this->status) {
             $output->write(\sprintf("\033[%dD", \strlen($this->status)));
+        }
+    }
+
+    public function reset(): void
+    {
+        if (null !== $this->lastUpdated && $this->lastUpdated >= 0) {
+            $this->current = $this->lastUpdated;
         }
     }
 }
