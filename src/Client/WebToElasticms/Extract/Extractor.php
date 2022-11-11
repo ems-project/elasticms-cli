@@ -133,6 +133,9 @@ class Extractor
             case Html::TYPE:
                 $extractor = new Html($this->config, $document, $this->logger, $this->rapport);
                 break;
+            case Bin::TYPE:
+                $extractor = new Bin($this->config, $document, $this->logger, $this->rapport);
+                break;
             default:
                 throw new \RuntimeException(\sprintf('Type of analyzer %s unknown', $analyzer->getType()));
         }
