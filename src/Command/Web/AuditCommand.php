@@ -109,6 +109,7 @@ class AuditCommand extends AbstractCommand
         while ($this->auditCache->hasNext()) {
             $result = $cacheManager->get($this->auditCache->next());
             $this->addMissingInternalLinks($this->auditCache->current(), $result);
+            $hash = $this->hashFromResources($result);
 //            $updateManager->update($extractedData, $this->force, $rapport);
             $this->auditCache->save($this->jsonPath);
 //            $rapport->save();
@@ -171,5 +172,19 @@ class AuditCommand extends AbstractCommand
         }
 
         $this->auditCache->addUrl($url->getUrl());
+    }
+
+    private function hashFromResources(HttpResult $result): string
+    {
+        $hashContext = \hash_init('sha1');
+        $handler = $result->getStream();
+        if (0 !== $handler->tell()) {
+            $handler->rewind();
+        }
+        while (!$handler->eof()) {
+            \hash_update($hashContext, $handler->read(1024 * 1024));
+        }
+
+        return \hash_final($hashContext);
     }
 }
