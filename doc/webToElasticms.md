@@ -196,4 +196,5 @@ Functions available:
 
 Variable available
  - `data` an instance of [ExpressionData](src/Client/WebToElasticms/Helper/ExpressionData.php)
+ - `document` an instance of [Document](src/Client/WebToElasticms/Config/Document.php)
 
