@@ -3,6 +3,7 @@
 namespace App\Client\Audit;
 
 use App\Client\HttpClient\HttpResult;
+use App\Client\WebToElasticms\Helper\Url;
 use App\Helper\Pa11yWrapper;
 use EMS\CommonBundle\Contracts\CoreApi\Endpoint\Data\DataInterface;
 use Psr\Log\LoggerInterface;
@@ -31,6 +32,7 @@ class AuditManager
         $data = [];
         $this->auditSecurity($url, $data, $result);
         $this->auditAccessibility($url, $data, $result);
+        $this->info($url, $data, $result);
     }
 
     /**
@@ -42,7 +44,7 @@ class AuditManager
     {
         $missingHeaders = [];
         foreach (['Strict-Transport-Security', 'Content-Security-Policy', 'X-Frame-Options', 'X-Content-Type-Options', 'Referrer-Policy', 'Permissions-Policy'] as $header) {
-            if (isset($result->getResponse()->getHeaders()[$header])) {
+            if ($result->getResponse()->hasHeader($header)) {
                 continue;
             }
             $data['security'][] = [
@@ -93,5 +95,17 @@ class AuditManager
         $data['pa11y'] = $this->pa11yWrapper->getJson();
 
         return $data['pa11y'];
+    }
+
+    /**
+     * @param mixed[] $data
+     */
+    private function info(string $url, array &$data, HttpResult $result): void
+    {
+        $data['status_code'] = $result->getResponse()->getStatusCode();
+        $data['mimetype'] = $result->getMimetype();
+        $data['url'] = $url;
+        $urlInfo = new Url($url);
+        $data['host'] = $urlInfo->getHost();
     }
 }
