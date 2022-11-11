@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Command\Web;
 
+use App\Client\Audit\AuditManager;
 use App\Client\Audit\Cache;
+use App\Client\Audit\Rapport;
 use App\Client\HttpClient\CacheManager;
 use App\Client\HttpClient\HttpResult;
 use App\Client\WebToElasticms\Helper\Url;
@@ -28,6 +30,7 @@ class AuditCommand extends AbstractCommand
     public const OPTION_MAX_UPDATES = 'max-updates';
     public const OPTION_FORCE = 'force';
     public const OPTION_DRY_RUN = 'dry-run';
+    public const OPTION_CONTENT_TYPE = 'content-type';
     public const OPTION_RAPPORTS_FOLDER = 'rapports-folder';
     private ConsoleLogger $logger;
     private string $jsonPath;
@@ -40,6 +43,7 @@ class AuditCommand extends AbstractCommand
     private int $maxUpdate;
     private Url $baseUrl;
     private Cache $auditCache;
+    private string $contentType;
 
     public function __construct(AdminHelper $adminHelper)
     {
@@ -64,6 +68,7 @@ class AuditCommand extends AbstractCommand
             )
             ->addOption(self::OPTION_FORCE, null, InputOption::VALUE_NONE, 'force update all documents')
             ->addOption(self::OPTION_DRY_RUN, null, InputOption::VALUE_NONE, 'don\'t update elasticms')
+            ->addOption(self::OPTION_CONTENT_TYPE, null, InputOption::VALUE_OPTIONAL, 'Audit\'s content type', 'audit')
             ->addOption(self::OPTION_RAPPORTS_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where rapports stored', \getcwd())
             ->addOption(self::OPTION_CACHE_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where cache will stored', \implode(DIRECTORY_SEPARATOR, [\getcwd(), 'cache']))
             ->addOption(self::OPTION_MAX_UPDATES, null, InputOption::VALUE_OPTIONAL, 'Maximum number of document that can be updated in 1 batch (if the continue option is activated)', 500);
@@ -80,6 +85,7 @@ class AuditCommand extends AbstractCommand
         $this->continue = $this->getOptionBool(self::OPTION_CONTINUE);
         $this->dryRun = $this->getOptionBool(self::OPTION_DRY_RUN);
         $this->rapportsFolder = $this->getOptionString(self::OPTION_RAPPORTS_FOLDER);
+        $this->contentType = $this->getOptionString(self::OPTION_CONTENT_TYPE);
         $this->maxUpdate = $this->getOptionInt(self::OPTION_MAX_UPDATES);
     }
 
@@ -95,10 +101,9 @@ class AuditCommand extends AbstractCommand
         $cacheManager = new CacheManager($this->cacheFolder);
         $this->auditCache = $this->loadAuditCache();
 
-//        $rapport = new Rapport($cacheManager, $this->rapportsFolder);
-//        $updateManager = new UpdateManager($this->adminHelper->getCoreApi(), $configManager, $this->logger, $this->dryRun);
-//
-//
+        $rapport = new Rapport($this->rapportsFolder);
+        $auditManager = new AuditManager($this->adminHelper->getCoreApi()->data($this->contentType), $rapport, $this->logger, $this->dryRun, $this->force);
+
         if ($this->continue) {
             $this->auditCache->reset();
         }
@@ -110,9 +115,9 @@ class AuditCommand extends AbstractCommand
             $result = $cacheManager->get($this->auditCache->next());
             $this->addMissingInternalLinks($this->auditCache->current(), $result);
             $hash = $this->hashFromResources($result);
-//            $updateManager->update($extractedData, $this->force, $rapport);
+            $auditManager->analyze($this->auditCache->current(), $result, $hash);
             $this->auditCache->save($this->jsonPath);
-//            $rapport->save();
+            $rapport->save();
             if ($this->continue && ++$counter >= $this->maxUpdate) {
                 $finish = false;
                 break;
@@ -123,7 +128,7 @@ class AuditCommand extends AbstractCommand
 
         $this->io->section('Save cache and rapport');
         $this->auditCache->save($this->jsonPath, $finish);
-//        $rapport->save();
+        $rapport->save();
 
         return self::EXECUTE_SUCCESS;
     }
