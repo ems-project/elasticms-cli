@@ -69,6 +69,9 @@ class Url
                 throw new \RuntimeException(\sprintf('Unexpected non string path %s', $path));
             }
         }
+        if ('/' !== \substr($path, 0, 1)) {
+            $path = '/'.$path;
+        }
 
         return $path;
     }
