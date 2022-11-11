@@ -95,12 +95,16 @@ class Extractor
                 }
             }
 
-            if ($withoutError && $data === $defaultData && $NoEmptyExtractor) {
+            if ($withoutError && $data === $defaultData && !$emptyExtractor) {
                 $rapport->addNothingExtracted($document);
                 continue;
             }
 
-            $hash = \sha1(Json::encode($data));
+            if ($emptyExtractor) {
+                $hash = $this->hashFromResources($document);
+            } else {
+                $hash = \sha1(Json::encode($data));
+            }
 
             $type = $this->config->getType($document->getType());
             foreach ($type->getComputers() as $computer) {
@@ -195,5 +199,20 @@ class Extractor
     public function reset(): void
     {
         $this->config->setLastUpdated(null);
+    }
+
+    private function hashFromResources(WebDocument $document): string
+    {
+        $hashContext = \hash_init('sha1');
+        foreach ($document->getResources() as $resource) {
+            $handler = $this->cache->get($resource->getUrl())->getStream();
+            if (0 !== $handler->tell()) {
+                $handler->rewind();
+            }
+            while (!$handler->eof()) {
+                \hash_update($hashContext, $handler->read(1024 * 1024));
+            }
+        }
+        return \hash_final($hashContext);
     }
 }
