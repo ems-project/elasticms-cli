@@ -4,6 +4,7 @@ namespace App\ExpressionLanguage;
 
 use EMS\CommonBundle\Common\Standard\Json;
 use Ramsey\Uuid\Uuid;
+use Symfony\Component\Process\Process;
 
 class Functions
 {
@@ -90,5 +91,17 @@ class Functions
         }
 
         return $body;
+    }
+
+    public static function pa11y(string $url): string
+    {
+        $process = new Process(['pa11y', '-s', 'WCAG2AA', '-r', 'json', $url]);
+        $process->setWorkingDirectory(__DIR__);
+        $process->run(function () {
+        }, [
+            'LANG' => 'en_US.utf-8',
+        ]);
+
+        return $process->getOutput();
     }
 }

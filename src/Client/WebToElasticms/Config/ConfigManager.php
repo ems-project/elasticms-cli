@@ -381,6 +381,12 @@ class ConfigManager
             return (null === $html || null === $tag || null === $fieldName || null === $typeName || null === $labelField) ? null : \App\ExpressionLanguage\Functions::domToJsonMenu($html, $tag, $fieldName, $typeName, $labelField);
         });
 
+        $this->expressionLanguage->register('pa11y', function ($url) {
+            return \sprintf('((null === %1$s) ? null : \\App\\ExpressionLanguage\\Functions::pa11y(%1$s))', $url);
+        }, function ($arguments, $url) {
+            return (null === $url) ? null : \App\ExpressionLanguage\Functions::pa11y($url);
+        });
+
         return $this->expressionLanguage;
     }
 
