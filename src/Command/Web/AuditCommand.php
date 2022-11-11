@@ -93,7 +93,7 @@ class AuditCommand extends AbstractCommand
 
         $this->io->section('Load config');
         $cacheManager = new CacheManager($this->cacheFolder);
-        $this->auditCache = $this->loadAuditCache($cacheManager);
+        $this->auditCache = $this->loadAuditCache();
 
 //        $rapport = new Rapport($cacheManager, $this->rapportsFolder);
 //        $updateManager = new UpdateManager($this->adminHelper->getCoreApi(), $configManager, $this->logger, $this->dryRun);
@@ -128,17 +128,17 @@ class AuditCommand extends AbstractCommand
         return self::EXECUTE_SUCCESS;
     }
 
-    protected function loadAuditCache(CacheManager $cacheManager): Cache
+    protected function loadAuditCache(): Cache
     {
         if (!\file_exists($this->jsonPath)) {
-            return new Cache($cacheManager, $this->baseUrl, $this->adminHelper->getCoreApi(), $this->logger);
+            return new Cache($this->baseUrl, $this->logger);
         }
         $contents = \file_get_contents($this->jsonPath);
         if (false === $contents) {
             throw new \RuntimeException('Unexpected false config file');
         }
 
-        return Cache::deserialize($contents, $cacheManager, $this->adminHelper->getCoreApi(), $this->logger);
+        return Cache::deserialize($contents, $this->logger);
     }
 
     private function addMissingInternalLinks(string $url, HttpResult $result): void

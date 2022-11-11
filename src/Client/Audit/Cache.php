@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Client\Audit;
 
-use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Helper\Url;
-use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
@@ -21,28 +19,20 @@ use Symfony\Component\Serializer\Serializer;
 
 class Cache
 {
-    private CacheManager $cacheManager;
     private Url $baseUrl;
     /** @var string[] */
     private array $urls;
     /** @var string[] */
     private array $hosts;
-    private CoreApiInterface $coreApi;
     private LoggerInterface $logger;
     private ?int $lastUpdated = null;
     private int $current = -1;
     private ?string $status = null;
 
-    public function __construct(?CacheManager $cacheManager = null, ?Url $baseUrl = null, ?CoreApiInterface $coreApi = null, ?LoggerInterface $logger = null)
+    public function __construct(?Url $baseUrl = null, ?LoggerInterface $logger = null)
     {
-        if (null !== $coreApi) {
-            $this->coreApi = $coreApi;
-        }
         if (null !== $logger) {
             $this->logger = $logger;
-        }
-        if (null !== $cacheManager) {
-            $this->cacheManager = $cacheManager;
         }
         if (null !== $baseUrl) {
             $this->baseUrl = $baseUrl;
@@ -58,14 +48,12 @@ class Cache
         return self::getSerializer()->serialize($this, $format);
     }
 
-    public static function deserialize(string $data, CacheManager $cache, CoreApiInterface $coreApi, LoggerInterface $logger, string $format = JsonEncoder::FORMAT): Cache
+    public static function deserialize(string $data, LoggerInterface $logger, string $format = JsonEncoder::FORMAT): Cache
     {
         $config = self::getSerializer()->deserialize($data, Cache::class, $format);
         if (!$config instanceof Cache) {
             throw new \RuntimeException('Unexpected non Cache object');
         }
-        $config->cacheManager = $cache;
-        $config->coreApi = $coreApi;
         $config->logger = $logger;
 
         return $config;
