@@ -77,11 +77,11 @@ class Extractor
             $defaultData = $document->getDefaultData();
             $data = $defaultData;
             $withoutError = true;
-            $NoEmptyExtractor = true;
+            $emptyExtractor = false;
             foreach ($document->getResources() as $resource) {
                 $this->logger->notice(\sprintf('Start extracting from %s', $resource->getUrl()));
                 if (EmptyExtractor::TYPE === $this->config->getAnalyzer($resource->getType())->getType()) {
-                    $NoEmptyExtractor = false;
+                    $emptyExtractor = true;
                 } else {
                     try {
                         $this->extractDataFromResource($document, $resource, $data);
