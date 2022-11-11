@@ -18,6 +18,7 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ExpressionLanguage;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 
 class Extractor
@@ -27,13 +28,15 @@ class Extractor
     private ExpressionLanguage $expressionLanguage;
     private LoggerInterface $logger;
     private Rapport $rapport;
+    private bool $autoDiscover;
 
-    public function __construct(ConfigManager $config, CacheManager $cache, LoggerInterface $logger, Rapport $rapport)
+    public function __construct(ConfigManager $config, CacheManager $cache, LoggerInterface $logger, Rapport $rapport, bool $autoDiscover)
     {
         $this->config = $config;
         $this->cache = $cache;
         $this->logger = $logger;
         $this->rapport = $rapport;
+        $this->autoDiscover = $autoDiscover;
         $this->expressionLanguage = $config->getExpressionLanguage();
     }
 
@@ -80,6 +83,7 @@ class Extractor
             $emptyExtractor = false;
             foreach ($document->getResources() as $resource) {
                 $this->logger->notice(\sprintf('Start extracting from %s', $resource->getUrl()));
+                $this->addInternalLinksAsDocument($resource);
                 if (EmptyExtractor::TYPE === $this->config->getAnalyzer($resource->getType())->getType()) {
                     $emptyExtractor = true;
                 } else {
@@ -172,7 +176,7 @@ class Extractor
         ]);
 
         if ($computer->isJsonDecode() && \is_string($value)) {
-            if ('null' === \trim($value)) {
+            if (\in_array(\trim($value), ['null', ''])) {
                 return null;
             }
 
@@ -210,6 +214,49 @@ class Extractor
                 \hash_update($hashContext, $handler->read(1024 * 1024));
             }
         }
+
         return \hash_final($hashContext);
+    }
+
+    private function addInternalLinksAsDocument(WebResource $resource): void
+    {
+        if (!$this->autoDiscover) {
+            return;
+        }
+
+        $result = $this->cache->get($resource->getUrl());
+        if (0 !== \strpos($result->getMimetype(), 'text/html')) {
+            $this->logger->notice(\sprintf('Mimetype %s not supported to extract internal links', $result->getMimetype()));
+        }
+
+        $stream = $result->getResponse()->getBody();
+        $stream->rewind();
+        $crawler = new Crawler($stream->getContents());
+        $content = $crawler->filter('a');
+        for ($i = 0; $i < $content->count(); ++$i) {
+            $item = $content->eq($i);
+            $href = $item->attr('href');
+            if (null === $href || 0 === \strlen($href) || '#' === \substr($href, 0, 1)) {
+                continue;
+            }
+            $url = new Url($href, $resource->getUrl());
+            $this->addInternalLinkAsDocument($url);
+        }
+    }
+
+    private function addInternalLinkAsDocument(Url $url): void
+    {
+        if (!\in_array($url->getHost(), $this->config->getHosts())) {
+            return;
+        }
+        if (!\in_array($url->getScheme(), ['http', 'https'])) {
+            return;
+        }
+
+        if (null !== $this->config->findInDocuments($url)) {
+            return;
+        }
+
+        $this->config->addDocument($url->getUrl());
     }
 }

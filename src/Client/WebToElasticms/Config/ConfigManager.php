@@ -225,7 +225,7 @@ class ConfigManager
         $this->validClasses = $validClasses;
     }
 
-    private function findInDocuments(Url $url): ?string
+    public function findInDocuments(Url $url): ?string
     {
         foreach ($this->documents as $document) {
             $ouuid = $document->getOuuid();
@@ -508,5 +508,15 @@ class ConfigManager
     public function setLastUpdated(?string $lastUpdated): void
     {
         $this->lastUpdated = $lastUpdated;
+    }
+
+    public function addDocument(string $url): void
+    {
+        $resource = new WebResource($url, 'en', 'default');
+        $document = new Document();
+        $document->setDefaultData([]);
+        $document->setType('audit');
+        $document->setResources([$resource]);
+        $this->documents[] = $document;
     }
 }
