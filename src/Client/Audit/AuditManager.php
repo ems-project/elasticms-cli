@@ -29,10 +29,17 @@ class AuditManager
 
     public function analyze(string $url, HttpResult $result, string $hash): void
     {
-        $data = [];
+        $data = [
+            'import_hash_resources' => $hash,
+        ];
         $this->auditSecurity($url, $data, $result);
         $this->auditAccessibility($url, $data, $result);
         $this->info($url, $data, $result);
+
+        if ($this->dryRun) {
+            return;
+        }
+        $this->dataApi->save(\sha1($url), $data);
     }
 
     /**

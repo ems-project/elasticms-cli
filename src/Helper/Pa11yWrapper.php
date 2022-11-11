@@ -44,6 +44,10 @@ class Pa11yWrapper
      */
     public function getJson(): array
     {
+        if (\in_array($this->output, [null, 'null', ''])) {
+            return [];
+        }
+
         return Json::decode($this->getOutput());
     }
 }
