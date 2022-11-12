@@ -166,5 +166,13 @@ class AuditManager
         if (\is_array($lighthouse['runWarnings'] ?? null) && \count($lighthouse['runWarnings']) > 0) {
             $data['warning'] = $lighthouse['runWarnings'][0];
         }
+        if (\is_array($lighthouse['categories'] ?? null)) {
+            foreach ($lighthouse['categories'] as $category) {
+                $data['lighthouse'][] = [
+                    'type' => $category['id'] ?? null,
+                    'score' => $category['score'] ?? null,
+                ];
+            }
+        }
     }
 }
