@@ -17,13 +17,17 @@ class AuditManager
     private LoggerInterface $logger;
     private bool $dryRun;
     private Pa11yWrapper $pa11yWrapper;
+    private bool $lighthouse;
+    private bool $pa11y;
 
-    public function __construct(DataInterface $dataApi, Rapport $rapport, LoggerInterface $logger, bool $dryRun)
+    public function __construct(DataInterface $dataApi, Rapport $rapport, LoggerInterface $logger, bool $dryRun, bool $pa11y, bool $lighthouse)
     {
         $this->dataApi = $dataApi;
         $this->rapport = $rapport;
         $this->logger = $logger;
         $this->dryRun = $dryRun;
+        $this->pa11y = $pa11y;
+        $this->lighthouse = $lighthouse;
         $this->pa11yWrapper = new Pa11yWrapper();
     }
 

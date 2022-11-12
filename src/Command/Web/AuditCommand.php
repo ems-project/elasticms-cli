@@ -44,6 +44,8 @@ class AuditCommand extends AbstractCommand
     private Cache $auditCache;
     private string $contentType;
     private CacheManager $cacheManager;
+    private bool $lighthouse;
+    private bool $pa11y;
 
     public function __construct(AdminHelper $adminHelper)
     {
@@ -67,6 +69,8 @@ class AuditCommand extends AbstractCommand
                 'Continue import from last know updated document'
             )
             ->addOption(self::OPTION_DRY_RUN, null, InputOption::VALUE_NONE, 'don\'t update elasticms')
+            ->addOption(self::OPTION_PA11Y, null, InputOption::VALUE_NONE, 'Add a pa11y accessibility audit')
+            ->addOption(self::OPTION_LIGHTHOUSE, null, InputOption::VALUE_NONE, 'Add a Lighthouse audit')
             ->addOption(self::OPTION_CONTENT_TYPE, null, InputOption::VALUE_OPTIONAL, 'Audit\'s content type', 'audit')
             ->addOption(self::OPTION_RAPPORTS_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where rapports stored', \getcwd())
             ->addOption(self::OPTION_CACHE_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where cache will stored', \implode(DIRECTORY_SEPARATOR, [\getcwd(), 'cache']))
@@ -82,6 +86,8 @@ class AuditCommand extends AbstractCommand
         $this->jsonPath = \sprintf('%s/%s.json', $this->cacheFolder, $this->baseUrl->getHost());
         $this->continue = $this->getOptionBool(self::OPTION_CONTINUE);
         $this->dryRun = $this->getOptionBool(self::OPTION_DRY_RUN);
+        $this->lighthouse = $this->getOptionBool(self::OPTION_LIGHTHOUSE);
+        $this->pa11y = $this->getOptionBool(self::OPTION_PA11Y);
         $this->rapportsFolder = $this->getOptionString(self::OPTION_RAPPORTS_FOLDER);
         $this->contentType = $this->getOptionString(self::OPTION_CONTENT_TYPE);
         $this->maxUpdate = $this->getOptionInt(self::OPTION_MAX_UPDATES);
@@ -100,7 +106,7 @@ class AuditCommand extends AbstractCommand
         $this->auditCache = $this->loadAuditCache();
 
         $rapport = new Rapport($this->rapportsFolder);
-        $auditManager = new AuditManager($this->adminHelper->getCoreApi()->data($this->contentType), $rapport, $this->logger, $this->dryRun);
+        $auditManager = new AuditManager($this->adminHelper->getCoreApi()->data($this->contentType), $rapport, $this->logger, $this->dryRun, $this->pa11y, $this->lighthouse);
 
         if ($this->continue) {
             $this->auditCache->reset();
