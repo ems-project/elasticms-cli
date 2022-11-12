@@ -153,4 +153,9 @@ class Url
     {
         return $this->referer;
     }
+
+    public function isCrawlable(): bool
+    {
+        return \in_array($this->getScheme(), ['http', 'https']);
+    }
 }

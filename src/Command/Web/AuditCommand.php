@@ -171,10 +171,7 @@ class AuditCommand extends AbstractCommand
 
     private function addMissingInternalLink(Url $url): void
     {
-        if (!\in_array($url->getHost(), $this->auditCache->getHosts())) {
-            return;
-        }
-        if (!\in_array($url->getScheme(), ['http', 'https'])) {
+        if (!$url->isCrawlable()) {
             return;
         }
 
