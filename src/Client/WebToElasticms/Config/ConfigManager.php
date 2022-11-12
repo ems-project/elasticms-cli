@@ -262,7 +262,7 @@ class ConfigManager
     {
         $asset = $this->cacheManager->get($url->getUrl());
         $mimeType = $asset->getMimetype();
-        if (200 != $asset->getResponse()->getStatusCode() || false !== \strpos($mimeType, 'text/html')) {
+        if (200 != $asset->getResponse()->getStatusCode() || !$asset->isHtml()) {
             return [];
         }
         $filename = $url->getFilename();

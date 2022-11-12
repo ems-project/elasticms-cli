@@ -107,7 +107,7 @@ class AuditManager
      */
     private function pa11y(string $url, array &$data, HttpResult $result): array
     {
-        if (0 !== \strpos($result->getMimetype(), 'text/html')) {
+        if (!$result->isHtml()) {
             $this->logger->notice(\sprintf('Mimetype %s not supported to audit accessibility', $result->getMimetype()));
 
             return [];

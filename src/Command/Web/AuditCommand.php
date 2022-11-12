@@ -153,7 +153,7 @@ class AuditCommand extends AbstractCommand
      */
     private function analyzeLinks(string $url, HttpResult $result): array
     {
-        if (0 !== \strpos($result->getMimetype(), 'text/html')) {
+        if (!$result->isHtml()) {
             $this->logger->notice(\sprintf('Mimetype %s not supported to analyze links', $result->getMimetype()));
 
             return [];
