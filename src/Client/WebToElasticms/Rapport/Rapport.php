@@ -11,8 +11,6 @@ use App\Client\WebToElasticms\Config\WebResource;
 use App\Client\WebToElasticms\Helper\Url;
 use EMS\CommonBundle\Common\SpreadsheetGeneratorService;
 use EMS\CommonBundle\Contracts\SpreadsheetGeneratorServiceInterface;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 
 class Rapport
@@ -93,28 +91,8 @@ class Rapport
 
     public function addUrlNotFound(Url $url): void
     {
-        try {
-            $result = $this->cacheManager->head($url->getUrl());
-            $code = $result->getResponse()->getStatusCode();
-            $message = '';
-        } catch (ClientException $e) {
-            $message = $e->getMessage();
-            $response = $e->getResponse();
-            if (null === $response) {
-                $code = 0;
-            } else {
-                $code = $response->getStatusCode();
-            }
-        } catch (RequestException $e) {
-            $message = $e->getMessage();
-            $response = $e->getResponse();
-            if (null === $response) {
-                $code = 0;
-            } else {
-                $code = $response->getStatusCode();
-            }
-        }
-        $this->missingInternalUrls[$url->getPath()] = [$url->getPath(), $url->getUrl(), \strval($code), $message, $url->getReferer() ?? 'N/A'];
+        $urlReport = $this->cacheManager->testUrl($url);
+        $this->missingInternalUrls[$url->getPath()] = [$url->getPath(), $url->getUrl(), \strval($urlReport->getStatusCode()), $urlReport->getMessage() ?? '', $url->getReferer() ?? 'N/A'];
     }
 
     public function addResourceInError(WebResource $resource, Url $url, int $code, string $message): void

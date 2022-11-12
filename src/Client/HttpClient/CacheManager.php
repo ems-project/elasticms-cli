@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Client\HttpClient;
 
+use App\Client\WebToElasticms\Helper\Url;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
 use Kevinrob\GuzzleCache\CacheMiddleware;
 use Kevinrob\GuzzleCache\Storage\Psr6CacheStorage;
@@ -14,6 +17,8 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 class CacheManager
 {
     private Client $client;
+    /** @var UrlReport[] */
+    private array $cachedReport = [];
 
     public function __construct(string $cacheFolder)
     {
@@ -40,5 +45,32 @@ class CacheManager
     public function head(string $url): HttpResult
     {
         return new HttpResult($this->client->head($url));
+    }
+
+    public function testUrl(Url $url): UrlReport
+    {
+        if (isset($this->cachedReport[$url->getUrl()])) {
+            return $this->cachedReport[$url->getUrl()];
+        }
+        $report = $this->generateUrlReport($url);
+        $this->cachedReport[$url->getUrl()] = $report;
+
+        return $report;
+    }
+
+    private function generateUrlReport(Url $url): UrlReport
+    {
+        if (!$url->isCrawlable()) {
+            return new UrlReport($url, 0, 'Not crawlable URL');
+        }
+        try {
+            $result = $this->head($url->getUrl());
+            $report = new UrlReport($url, $result->getResponse()->getStatusCode());
+        } catch (ClientException|RequestException $e) {
+            $response = $e->getResponse();
+            $report = new UrlReport($url, null === $response ? 0 : $response->getStatusCode(), $e->getMessage());
+        }
+
+        return $report;
     }
 }

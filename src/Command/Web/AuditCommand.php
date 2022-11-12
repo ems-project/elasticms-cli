@@ -9,6 +9,7 @@ use App\Client\Audit\Cache;
 use App\Client\Audit\Rapport;
 use App\Client\HttpClient\CacheManager;
 use App\Client\HttpClient\HttpResult;
+use App\Client\HttpClient\UrlReport;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Commands;
 use EMS\CommonBundle\Common\Admin\AdminHelper;
@@ -44,6 +45,7 @@ class AuditCommand extends AbstractCommand
     private Url $baseUrl;
     private Cache $auditCache;
     private string $contentType;
+    private CacheManager $cacheManager;
 
     public function __construct(AdminHelper $adminHelper)
     {
@@ -98,7 +100,7 @@ class AuditCommand extends AbstractCommand
         }
 
         $this->io->section('Load config');
-        $cacheManager = new CacheManager($this->cacheFolder);
+        $this->cacheManager = new CacheManager($this->cacheFolder);
         $this->auditCache = $this->loadAuditCache();
 
         $rapport = new Rapport($this->rapportsFolder);
@@ -112,10 +114,10 @@ class AuditCommand extends AbstractCommand
         $counter = 0;
         $finish = true;
         while ($this->auditCache->hasNext()) {
-            $result = $cacheManager->get($this->auditCache->next());
-            $this->addMissingInternalLinks($this->auditCache->current(), $result);
+            $result = $this->cacheManager->get($this->auditCache->next());
+            $externalLInks = $this->analyzeLinks($this->auditCache->current(), $result);
             $hash = $this->hashFromResources($result);
-            $auditManager->analyze($this->auditCache->current(), $result, $hash);
+            $auditManager->analyze($this->auditCache->current(), $result, $hash, $externalLInks);
             $this->auditCache->save($this->jsonPath);
             $rapport->save();
             if ($this->continue && ++$counter >= $this->maxUpdate) {
@@ -146,18 +148,22 @@ class AuditCommand extends AbstractCommand
         return Cache::deserialize($contents, $this->logger);
     }
 
-    private function addMissingInternalLinks(string $url, HttpResult $result): void
+    /**
+     * @return UrlReport[]
+     */
+    private function analyzeLinks(string $url, HttpResult $result): array
     {
         if (0 !== \strpos($result->getMimetype(), 'text/html')) {
-            $this->logger->notice(\sprintf('Mimetype %s not supported to extract internal links', $result->getMimetype()));
+            $this->logger->notice(\sprintf('Mimetype %s not supported to analyze links', $result->getMimetype()));
 
-            return;
+            return [];
         }
 
         $stream = $result->getResponse()->getBody();
         $stream->rewind();
         $crawler = new Crawler($stream->getContents());
         $content = $crawler->filter('a');
+        $externalLinks = [];
         for ($i = 0; $i < $content->count(); ++$i) {
             $item = $content->eq($i);
             $href = $item->attr('href');
@@ -165,8 +171,15 @@ class AuditCommand extends AbstractCommand
                 continue;
             }
             $link = new Url($href, $url);
-            $this->addMissingInternalLink($link);
+
+            if (\in_array($link->getHost(), $this->auditCache->getHosts())) {
+                $this->addMissingInternalLink($link);
+            } else {
+                $externalLinks[] = $this->cacheManager->testUrl($link);
+            }
         }
+
+        return $externalLinks;
     }
 
     private function addMissingInternalLink(Url $url): void

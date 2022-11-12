@@ -3,8 +3,10 @@
 namespace App\Client\Audit;
 
 use App\Client\HttpClient\HttpResult;
+use App\Client\HttpClient\UrlReport;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Helper\Pa11yWrapper;
+use EMS\CommonBundle\Common\Standard\Json;
 use EMS\CommonBundle\Contracts\CoreApi\Endpoint\Data\DataInterface;
 use Psr\Log\LoggerInterface;
 
@@ -27,16 +29,28 @@ class AuditManager
         $this->pa11yWrapper = new Pa11yWrapper();
     }
 
-    public function analyze(string $url, HttpResult $result, string $hash): void
+    /**
+     * @param UrlReport[] $externalLinks
+     */
+    public function analyze(string $url, HttpResult $result, string $hash, array $externalLinks): void
     {
         $data = [
             'import_hash_resources' => $hash,
         ];
+        foreach ($externalLinks as $link) {
+            $data['links'][] = [
+                'url' => $link->getUrl()->getUrl(),
+                'message' => $link->getMessage(),
+                'status_code' => $link->getStatusCode(),
+            ];
+        }
         $this->auditSecurity($url, $data, $result);
         $this->auditAccessibility($url, $data, $result);
         $this->info($url, $data, $result);
 
         if ($this->dryRun) {
+            $this->logger->notice(Json::encode($data, true));
+
             return;
         }
         $this->dataApi->save(\sha1($url), $data);
