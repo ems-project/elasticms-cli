@@ -30,6 +30,8 @@ class AuditCommand extends AbstractCommand
     public const OPTION_CACHE_FOLDER = 'cache-folder';
     public const OPTION_MAX_UPDATES = 'max-updates';
     public const OPTION_DRY_RUN = 'dry-run';
+    public const OPTION_PA11Y = 'pa11y';
+    public const OPTION_LIGHTHOUSE = 'lighthouse';
     public const OPTION_CONTENT_TYPE = 'content-type';
     public const OPTION_RAPPORTS_FOLDER = 'rapports-folder';
     private ConsoleLogger $logger;
