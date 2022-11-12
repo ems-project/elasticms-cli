@@ -16,16 +16,14 @@ class AuditManager
     private Rapport $rapport;
     private LoggerInterface $logger;
     private bool $dryRun;
-    private bool $force;
     private Pa11yWrapper $pa11yWrapper;
 
-    public function __construct(DataInterface $dataApi, Rapport $rapport, LoggerInterface $logger, bool $dryRun, bool $force)
+    public function __construct(DataInterface $dataApi, Rapport $rapport, LoggerInterface $logger, bool $dryRun)
     {
         $this->dataApi = $dataApi;
         $this->rapport = $rapport;
         $this->logger = $logger;
         $this->dryRun = $dryRun;
-        $this->force = $force;
         $this->pa11yWrapper = new Pa11yWrapper();
     }
 

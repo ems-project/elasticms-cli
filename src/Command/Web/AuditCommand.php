@@ -29,14 +29,12 @@ class AuditCommand extends AbstractCommand
     private const OPTION_CONTINUE = 'continue';
     public const OPTION_CACHE_FOLDER = 'cache-folder';
     public const OPTION_MAX_UPDATES = 'max-updates';
-    public const OPTION_FORCE = 'force';
     public const OPTION_DRY_RUN = 'dry-run';
     public const OPTION_CONTENT_TYPE = 'content-type';
     public const OPTION_RAPPORTS_FOLDER = 'rapports-folder';
     private ConsoleLogger $logger;
     private string $jsonPath;
     private string $cacheFolder;
-    private bool $force;
     private bool $continue;
     private bool $dryRun;
     private string $rapportsFolder;
@@ -68,7 +66,6 @@ class AuditCommand extends AbstractCommand
                 InputOption::VALUE_NONE,
                 'Continue import from last know updated document'
             )
-            ->addOption(self::OPTION_FORCE, null, InputOption::VALUE_NONE, 'force update all documents')
             ->addOption(self::OPTION_DRY_RUN, null, InputOption::VALUE_NONE, 'don\'t update elasticms')
             ->addOption(self::OPTION_CONTENT_TYPE, null, InputOption::VALUE_OPTIONAL, 'Audit\'s content type', 'audit')
             ->addOption(self::OPTION_RAPPORTS_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where rapports stored', \getcwd())
@@ -83,7 +80,6 @@ class AuditCommand extends AbstractCommand
         $this->baseUrl = new Url($this->getArgumentString(self::ARG_URL));
         $this->cacheFolder = $this->getOptionString(self::OPTION_CACHE_FOLDER);
         $this->jsonPath = \sprintf('%s/%s.json', $this->cacheFolder, $this->baseUrl->getHost());
-        $this->force = $this->getOptionBool(self::OPTION_FORCE);
         $this->continue = $this->getOptionBool(self::OPTION_CONTINUE);
         $this->dryRun = $this->getOptionBool(self::OPTION_DRY_RUN);
         $this->rapportsFolder = $this->getOptionString(self::OPTION_RAPPORTS_FOLDER);
@@ -104,7 +100,7 @@ class AuditCommand extends AbstractCommand
         $this->auditCache = $this->loadAuditCache();
 
         $rapport = new Rapport($this->rapportsFolder);
-        $auditManager = new AuditManager($this->adminHelper->getCoreApi()->data($this->contentType), $rapport, $this->logger, $this->dryRun, $this->force);
+        $auditManager = new AuditManager($this->adminHelper->getCoreApi()->data($this->contentType), $rapport, $this->logger, $this->dryRun);
 
         if ($this->continue) {
             $this->auditCache->reset();
