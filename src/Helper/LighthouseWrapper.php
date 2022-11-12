@@ -21,6 +21,7 @@ class LighthouseWrapper
             './node_modules/lighthouse/lighthouse-cli/index.js',
             $url,
             '--output=json',
+            '--preset=desktop',
             '--quiet',
             '--only-categories=accessibility,best-practices,performance,seo',
             '--chrome-flags=\'--headless --disable-gpu --no-sandbox\'',

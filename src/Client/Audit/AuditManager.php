@@ -5,9 +5,12 @@ namespace App\Client\Audit;
 use App\Client\HttpClient\HttpResult;
 use App\Client\HttpClient\UrlReport;
 use App\Client\WebToElasticms\Helper\Url;
+use App\Helper\LighthouseWrapper;
 use App\Helper\Pa11yWrapper;
+use App\Helper\StringStream;
 use EMS\CommonBundle\Common\Standard\Json;
 use EMS\CommonBundle\Contracts\CoreApi\Endpoint\Data\DataInterface;
+use EMS\CommonBundle\Contracts\CoreApi\Endpoint\File\FileInterface;
 use Psr\Log\LoggerInterface;
 
 class AuditManager
@@ -19,10 +22,12 @@ class AuditManager
     private Pa11yWrapper $pa11yWrapper;
     private bool $lighthouse;
     private bool $pa11y;
+    private FileInterface $fileApi;
 
-    public function __construct(DataInterface $dataApi, Rapport $rapport, LoggerInterface $logger, bool $dryRun, bool $pa11y, bool $lighthouse)
+    public function __construct(DataInterface $dataApi, FileInterface $fileApi, Rapport $rapport, LoggerInterface $logger, bool $dryRun, bool $pa11y, bool $lighthouse)
     {
         $this->dataApi = $dataApi;
+        $this->fileApi = $fileApi;
         $this->rapport = $rapport;
         $this->logger = $logger;
         $this->dryRun = $dryRun;
@@ -47,7 +52,12 @@ class AuditManager
             ];
         }
         $this->auditSecurity($url, $data, $result);
-        $this->auditAccessibility($url, $data, $result);
+        if ($this->pa11y) {
+            $this->auditAccessibility($url, $data, $result);
+        }
+        if ($this->lighthouse) {
+            $this->auditLighthouse($url, $data);
+        }
         $this->info($url, $data, $result);
 
         if ($this->dryRun) {
@@ -131,5 +141,30 @@ class AuditManager
         $urlInfo = new Url($url);
         $data['host'] = $urlInfo->getHost();
         $data['timestamp'] = (new \DateTimeImmutable())->format('c');
+    }
+
+    /**
+     * @param mixed[] $data
+     */
+    private function auditLighthouse(string $url, array &$data): void
+    {
+        $wrapper = (new LighthouseWrapper())->run($url);
+        $lighthouse = $wrapper->getJson();
+        if (isset($lighthouse['audits']['final-screenshot']['details']['data']) && \is_string($lighthouse['audits']['final-screenshot']['details']['data'])) {
+            $output_array = [];
+            \preg_match('/data:(?P<mimetype>[a-z\/\-\+]+\/[a-z\/\-\+]+);base64,(?P<base64>.+)/', $lighthouse['audits']['final-screenshot']['details']['data'], $output_array);
+            if (isset($output_array['mimetype']) && isset($output_array['base64']) && \is_string($output_array['mimetype']) && \is_string($output_array['base64'])) {
+                $stream = new StringStream(\base64_decode($output_array['base64']));
+                $hash = $this->fileApi->uploadStream($stream, 'final-screenshot', $output_array['mimetype']);
+                $data['screenshot'] = [
+                    'sha1' => $hash,
+                    'filename' => 'final-screenshot',
+                    'mimetype' => $output_array['mimetype'],
+                ];
+            }
+        }
+        if (\is_array($lighthouse['runWarnings'] ?? null) && \count($lighthouse['runWarnings']) > 0) {
+            $data['warning'] = $lighthouse['runWarnings'][0];
+        }
     }
 }
