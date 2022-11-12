@@ -17,17 +17,25 @@ class Pa11yWrapper
         $this->timeout = $timeout;
     }
 
-    public function run(string $url): void
+    public function run(string $url): Pa11yWrapper
     {
-        $process = new Process(['pa11y', '-s', $this->standard, '-r', 'json', $url]);
+        $process = new Process([
+            './node_modules/pa11y/bin/pa11y.js',
+            '-s',
+            $this->standard,
+            '-r',
+            'json',
+            $url,
+        ]);
         $process->setTimeout($this->timeout);
-        $process->setWorkingDirectory(__DIR__);
         $process->run(function () {
         }, [
             'LANG' => 'en_US.utf-8',
         ]);
 
         $this->output = $process->getOutput();
+
+        return $this;
     }
 
     public function getOutput(): string
