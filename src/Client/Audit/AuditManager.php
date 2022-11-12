@@ -126,5 +126,6 @@ class AuditManager
         $data['url'] = $url;
         $urlInfo = new Url($url);
         $data['host'] = $urlInfo->getHost();
+        $data['timestamp'] = (new \DateTimeImmutable())->format('c');
     }
 }
