@@ -43,7 +43,6 @@ class MigrationCommand extends AbstractCommand
     private bool $dump;
     private AdminHelper $adminHelper;
     private int $maxUpdate;
-    private bool $autoDiscover;
 
     public function __construct(AdminHelper $adminHelper)
     {
