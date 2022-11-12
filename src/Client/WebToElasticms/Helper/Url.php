@@ -56,7 +56,12 @@ class Url
     private function getAbsolutePath(string $path, string $relativeToPath): string
     {
         if ('/' !== \substr($relativeToPath, \strlen($relativeToPath) - 1)) {
-            $relativeToPath .= '/';
+            $lastSlash = \strripos($relativeToPath, '/');
+            if (false === $lastSlash) {
+                $relativeToPath .= '/';
+            } else {
+                $relativeToPath = \substr($relativeToPath, 0, $lastSlash + 1);
+            }
         }
 
         if ('.' === \substr($path, 0, 1)) {
