@@ -22,7 +22,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 
-class Html implements ExtractorInterface
+class Html
 {
     public const TYPE = 'html';
     private ConfigManager $config;
