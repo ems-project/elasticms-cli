@@ -10,7 +10,7 @@ class LighthouseWrapper
     private ?string $output = null;
     private float $timeout;
 
-    public function __construct(float $timeout = 3 * 60.0)
+    public function __construct(float $timeout = 5 * 60.0)
     {
         $this->timeout = $timeout;
     }

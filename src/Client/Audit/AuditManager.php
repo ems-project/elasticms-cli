@@ -106,9 +106,13 @@ class AuditManager
      */
     private function auditAccessibility(string $url, array &$data, HttpResult $result): void
     {
-        $pa11y = $this->pa11y($url, $data, $result);
-        if (\count($pa11y) > 0) {
-            $this->rapport->addAccessibilityError($url, \count($pa11y));
+        try {
+            $pa11y = $this->pa11y($url, $data, $result);
+            if (\count($pa11y) > 0) {
+                $this->rapport->addAccessibilityError($url, \count($pa11y));
+            }
+        } catch (\Throwable $e) {
+            $this->logger->critical(\sprintf('Pa11y audit for %s failed: %s', $url, $e->getMessage()));
         }
     }
 
@@ -148,31 +152,38 @@ class AuditManager
      */
     private function auditLighthouse(string $url, array &$data): void
     {
-        $wrapper = (new LighthouseWrapper())->run($url);
-        $lighthouse = $wrapper->getJson();
-        if (isset($lighthouse['audits']['final-screenshot']['details']['data']) && \is_string($lighthouse['audits']['final-screenshot']['details']['data'])) {
-            $output_array = [];
-            \preg_match('/data:(?P<mimetype>[a-z\/\-\+]+\/[a-z\/\-\+]+);base64,(?P<base64>.+)/', $lighthouse['audits']['final-screenshot']['details']['data'], $output_array);
-            if (isset($output_array['mimetype']) && isset($output_array['base64']) && \is_string($output_array['mimetype']) && \is_string($output_array['base64'])) {
-                $stream = new StringStream(\base64_decode($output_array['base64']));
-                $hash = $this->fileApi->uploadStream($stream, 'final-screenshot', $output_array['mimetype']);
-                $data['screenshot'] = [
-                    'sha1' => $hash,
-                    'filename' => 'final-screenshot',
-                    'mimetype' => $output_array['mimetype'],
-                ];
+        try {
+            $wrapper = (new LighthouseWrapper())->run($url);
+            $lighthouse = $wrapper->getJson();
+            if (isset($lighthouse['audits']['final-screenshot']['details']['data']) && \is_string($lighthouse['audits']['final-screenshot']['details']['data'])) {
+                $output_array = [];
+                \preg_match('/data:(?P<mimetype>[a-z\/\-\+]+\/[a-z\/\-\+]+);base64,(?P<base64>.+)/', $lighthouse['audits']['final-screenshot']['details']['data'], $output_array);
+                if (isset($output_array['mimetype']) && isset($output_array['base64']) && \is_string($output_array['mimetype']) && \is_string($output_array['base64'])) {
+                    $stream = new StringStream(\base64_decode($output_array['base64']));
+                    $hash = $this->fileApi->uploadStream($stream, 'final-screenshot', $output_array['mimetype']);
+                    $data['screenshot'] = [
+                        'sha1' => $hash,
+                        'filename' => 'final-screenshot',
+                        'mimetype' => $output_array['mimetype'],
+                    ];
+                }
             }
-        }
-        if (\is_array($lighthouse['runWarnings'] ?? null) && \count($lighthouse['runWarnings']) > 0) {
-            $data['warning'] = $lighthouse['runWarnings'][0];
-        }
-        if (\is_array($lighthouse['categories'] ?? null)) {
-            foreach ($lighthouse['categories'] as $category) {
-                $data['lighthouse'][] = [
-                    'type' => $category['id'] ?? null,
-                    'score' => $category['score'] ?? null,
-                ];
+            if (\is_array($lighthouse['runWarnings'] ?? null) && \count($lighthouse['runWarnings']) > 0) {
+                $data['warning'] = $lighthouse['runWarnings'][0];
             }
+            if (\is_array($lighthouse['categories'] ?? null)) {
+                foreach ($lighthouse['categories'] as $category) {
+                    $data[\sprintf('lighthouse_%s', $category['id'])] = $category['score'] ?? null;
+                }
+            }
+            unset($lighthouse['i18n']);
+            unset($lighthouse['timing']);
+            unset($lighthouse['audits']['full-page-screenshot']);
+            unset($lighthouse['audits']['screenshot-thumbnails']);
+            unset($lighthouse['audits']['final-screenshot']);
+            $data['lighthouse_report'] = Json::encode($lighthouse, true);
+        } catch (\Throwable $e) {
+            $this->logger->critical(\sprintf('Lighthouse audit for %s failed: %s', $url, $e->getMessage()));
         }
     }
 }
