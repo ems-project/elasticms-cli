@@ -9,6 +9,7 @@ use App\Client\HttpClient\UrlReport;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Helper\LighthouseWrapper;
 use App\Helper\Pa11yWrapper;
+use App\Helper\TikaWrapper;
 use EMS\CommonBundle\Common\Standard\Json;
 use EMS\CommonBundle\Contracts\CoreApi\Endpoint\Data\DataInterface;
 use EMS\CommonBundle\Contracts\CoreApi\Endpoint\File\FileInterface;
@@ -25,8 +26,10 @@ class AuditManager
     private bool $lighthouse;
     private bool $pa11y;
     private FileInterface $fileApi;
+    private bool $tika;
+    private TikaWrapper $tikeWrapper;
 
-    public function __construct(DataInterface $dataApi, FileInterface $fileApi, Rapport $rapport, LoggerInterface $logger, bool $dryRun, bool $pa11y, bool $lighthouse)
+    public function __construct(DataInterface $dataApi, FileInterface $fileApi, Rapport $rapport, LoggerInterface $logger, string $cacheFolder, bool $dryRun, bool $pa11y, bool $lighthouse, bool $tika)
     {
         $this->dataApi = $dataApi;
         $this->fileApi = $fileApi;
@@ -35,7 +38,9 @@ class AuditManager
         $this->dryRun = $dryRun;
         $this->pa11y = $pa11y;
         $this->lighthouse = $lighthouse;
+        $this->tika = $tika;
         $this->pa11yWrapper = new Pa11yWrapper();
+        $this->tikeWrapper = new TikaWrapper($cacheFolder);
     }
 
     /**
@@ -59,6 +64,9 @@ class AuditManager
         }
         if ($this->lighthouse) {
             $this->auditLighthouse($url, $data);
+        }
+        if ($this->tika) {
+            $this->auditTika($url, $data, $result);
         }
         $this->info($url, $data, $result);
 
@@ -187,6 +195,21 @@ class AuditManager
             $data['lighthouse_report'] = Json::encode($lighthouse, true);
         } catch (\Throwable $e) {
             $this->logger->critical(\sprintf('Lighthouse audit for %s failed: %s', $url, $e->getMessage()));
+        }
+    }
+
+    /**
+     * @param mixed[] $data
+     */
+    private function auditTika(string $url, array &$data, HttpResult $result): void
+    {
+        $stream = $result->getStream();
+        $data['locale'] = $this->tikeWrapper->getLocale($stream);
+        $data['content'] = $this->tikeWrapper->getText($stream);
+        foreach ($this->tikeWrapper->getLinks($stream) as $link) {
+            $data['links'][] = [
+                'url' => $link,
+            ];
         }
     }
 }

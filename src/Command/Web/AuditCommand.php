@@ -31,6 +31,7 @@ class AuditCommand extends AbstractCommand
     public const OPTION_MAX_UPDATES = 'max-updates';
     public const OPTION_DRY_RUN = 'dry-run';
     public const OPTION_PA11Y = 'pa11y';
+    public const OPTION_TIKA = 'tika';
     public const OPTION_LIGHTHOUSE = 'lighthouse';
     public const OPTION_CONTENT_TYPE = 'content-type';
     public const OPTION_RAPPORTS_FOLDER = 'rapports-folder';
@@ -48,6 +49,7 @@ class AuditCommand extends AbstractCommand
     private CacheManager $cacheManager;
     private bool $lighthouse;
     private bool $pa11y;
+    private bool $tika;
 
     public function __construct(AdminHelper $adminHelper)
     {
@@ -90,6 +92,7 @@ class AuditCommand extends AbstractCommand
         $this->dryRun = $this->getOptionBool(self::OPTION_DRY_RUN);
         $this->lighthouse = $this->getOptionBool(self::OPTION_LIGHTHOUSE);
         $this->pa11y = $this->getOptionBool(self::OPTION_PA11Y);
+        $this->tika = $this->getOptionBool(self::OPTION_TIKA);
         $this->rapportsFolder = $this->getOptionString(self::OPTION_RAPPORTS_FOLDER);
         $this->contentType = $this->getOptionString(self::OPTION_CONTENT_TYPE);
         $this->maxUpdate = $this->getOptionInt(self::OPTION_MAX_UPDATES);
@@ -108,7 +111,7 @@ class AuditCommand extends AbstractCommand
         $this->auditCache = $this->loadAuditCache();
 
         $rapport = new Rapport($this->rapportsFolder);
-        $auditManager = new AuditManager($this->adminHelper->getCoreApi()->data($this->contentType), $this->adminHelper->getCoreApi()->file(), $rapport, $this->logger, $this->dryRun, $this->pa11y, $this->lighthouse);
+        $auditManager = new AuditManager($this->adminHelper->getCoreApi()->data($this->contentType), $this->adminHelper->getCoreApi()->file(), $rapport, $this->logger, $this->cacheFolder, $this->dryRun, $this->pa11y, $this->lighthouse, $this->tika);
 
         if ($this->continue) {
             $this->auditCache->reset();
