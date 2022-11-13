@@ -16,7 +16,7 @@ class Rapport
     /** @var string[][] */
     private array $securityErrors = [['URL', 'Missing headers']];
     /** @var string[][] */
-    private array $brokenLinks = [['URL', 'Status Code', 'Error message']];
+    private array $brokenLinks = [['URL', 'Status Code', 'Error message', 'Referer']];
     /** @var string[][] */
     private array $warnings = [['URL', 'First warning', 'Warnings']];
     private string $filename;
@@ -68,7 +68,7 @@ class Rapport
 
     public function addBrokenLink(UrlReport $urlReport): void
     {
-        $this->brokenLinks[] = [$urlReport->getUrl()->getUrl(), \strval($urlReport->getStatusCode()), $urlReport->getMessage() ?? ''];
+        $this->brokenLinks[] = [$urlReport->getUrl()->getUrl(), \strval($urlReport->getStatusCode()), $urlReport->getMessage() ?? '', $urlReport->getUrl()->getReferer() ?? ''];
     }
 
     /**
