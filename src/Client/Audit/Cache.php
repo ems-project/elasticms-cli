@@ -151,7 +151,7 @@ class Cache
     {
         $this->rewindOutput($output);
         $currentPosition = $this->currentPos();
-        $this->status = \sprintf('%d urls audited, %d urls pending, %d urls found', $currentPosition+1, \count($this->urls) - $currentPosition - 1, \count($this->urls));
+        $this->status = \sprintf('%d urls audited, %d urls pending, %d urls found', $currentPosition + 1, \count($this->urls) - $currentPosition - 1, \count($this->urls));
         $output->write($this->status);
     }
 
