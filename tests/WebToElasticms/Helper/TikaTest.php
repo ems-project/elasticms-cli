@@ -27,7 +27,7 @@ class TikaTest extends TestCase
         $tikaWrapper = new TikaWrapper(\sys_get_temp_dir());
         $bonjourDocx = new Stream(\fopen(\join(DIRECTORY_SEPARATOR, [__DIR__, 'resources', 'Bonjour.docx']), 'r'));
         $this->assertEquals('fr', $tikaWrapper->getLocale($bonjourDocx));
-        $this->assertEquals('Bonjour, comment allez-vous ? Voici un lien vers google. Bonne journée.', \trim(\preg_replace('!\s+!', ' ', $tikaWrapper->getText($bonjourDocx))));
+        $this->assertEquals('Bonjour, comment allez-vous ? Voici un lien vers google. Bonne journée.', $tikaWrapper->getText($bonjourDocx, true));
         $json = $tikaWrapper->getJson($bonjourDocx);
         $this->assertEquals('Mathieu De Keyzer', $json['dc:creator'] ?? null);
         $this->assertEquals('Texte de test tika', $json['dc:title'] ?? null);
@@ -39,7 +39,7 @@ class TikaTest extends TestCase
         $tikaWrapper = new TikaWrapper(\sys_get_temp_dir());
         $bonjourDocx = new Stream(\fopen(\join(DIRECTORY_SEPARATOR, [__DIR__, 'resources', 'Bonjour.pdf']), 'r'));
         $this->assertEquals('fr', $tikaWrapper->getLocale($bonjourDocx));
-        $this->assertEquals('Bonjour, comment allez-vous ? Voici un lien vers google. Bonne journée. https://www.google.com/', \trim(\preg_replace('!\s+!', ' ', $tikaWrapper->getText($bonjourDocx))));
+        $this->assertEquals('Bonjour, comment allez-vous ? Voici un lien vers google. Bonne journée. https://www.google.com/', $tikaWrapper->getText($bonjourDocx, true));
         $this->assertEquals(['https://www.google.com/'], $tikaWrapper->getLinks($bonjourDocx));
     }
 }

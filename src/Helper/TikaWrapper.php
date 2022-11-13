@@ -20,7 +20,7 @@ class TikaWrapper
         $this->tikaJar = \join(DIRECTORY_SEPARATOR, [$cacheFolder, 'tika.jar']);
     }
 
-    protected function run(string $option, StreamInterface $stream): string
+    protected function run(string $option, StreamInterface $stream, bool $trimWhiteSpaces = false): string
     {
         $text = $stream->getContents();
         $this->initialize();
@@ -43,6 +43,10 @@ class TikaWrapper
         $input->write($text);
         $input->close();
         $process->wait();
+
+        if ($trimWhiteSpaces) {
+            return \trim(\preg_replace('!\s+!', ' ', $process->getOutput()) ?? '');
+        }
 
         return $process->getOutput();
     }
@@ -83,19 +87,21 @@ class TikaWrapper
         return $externalLinks;
     }
 
-    public function getText(StreamInterface $stream): string
+    public function getText(StreamInterface $stream, bool $trimWhiteSpaces = false): string
     {
-        return $this->run('--text', $stream);
+        $text = $this->run('--text', $stream, $trimWhiteSpaces);
+
+        return $text;
     }
 
-    public function getTextMain(StreamInterface $stream): string
+    public function getTextMain(StreamInterface $stream, bool $trimWhiteSpaces = false): string
     {
-        return $this->run('--text-main', $stream);
+        return $this->run('--text-main', $stream, $trimWhiteSpaces);
     }
 
-    public function getMetadata(StreamInterface $stream): string
+    public function getMetadata(StreamInterface $stream, bool $trimWhiteSpaces = false): string
     {
-        return $this->run('--metadata', $stream);
+        return $this->run('--metadata', $stream, $trimWhiteSpaces);
     }
 
     /**
@@ -113,12 +119,12 @@ class TikaWrapper
 
     public function getLocale(StreamInterface $stream): string
     {
-        return \trim($this->run('--language', $stream));
+        return $this->run('--language', $stream, true);
     }
 
     public function getDocumentType(StreamInterface $stream): string
     {
-        return $this->run('--detect', $stream);
+        return $this->run('--detect', $stream, true);
     }
 
     private function initialize(): void
