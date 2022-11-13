@@ -38,6 +38,7 @@ class AuditResult
     private \DateTimeImmutable $datetime;
     private ?string $locale = null;
     private ?string $content = null;
+    private bool $valid = true;
 
     public function __construct(Url $url, string $hash)
     {
@@ -230,6 +231,7 @@ class AuditResult
             'status_code' => $this->statusCode,
             'warning' => $this->warnings[0] ?? null,
             'mimetype' => $this->mimetype,
+            'error' => $this->errorMessage,
             'lighthouse_accessibility' => $this->accessibility,
             'lighthouse_performance' => $this->performance,
             'lighthouse_best-practices' => $this->bestPractices,
@@ -254,5 +256,38 @@ class AuditResult
     public function addExternalLink(UrlReport $testUrl): void
     {
         $this->externalLinks[] = $testUrl;
+    }
+
+    public function setValid(bool $valid): void
+    {
+        $this->valid = $valid;
+    }
+
+    public function isValid(): bool
+    {
+        return $this->valid;
+    }
+
+    public function getUrlReport(): UrlReport
+    {
+        return new UrlReport($this->getUrl(), $this->getStatusCode(), $this->errorMessage);
+    }
+
+    /**
+     * @return SecurityWarning[]
+     */
+    public function getSecurityWarnings(): array
+    {
+        return $this->securityWarnings;
+    }
+
+    public function getAccessibility(): ?float
+    {
+        return $this->accessibility;
+    }
+
+    public function getBestPractices(): ?float
+    {
+        return $this->bestPractices;
     }
 }

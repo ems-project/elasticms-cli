@@ -62,6 +62,8 @@ class AuditManager
     {
         $audit->setErrorMessage($result->getErrorMessage());
         if (!$result->hasResponse()) {
+            $audit->setValid(false);
+
             return;
         }
         $audit->setStatusCode($result->getResponse()->getStatusCode());

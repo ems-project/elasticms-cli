@@ -130,10 +130,19 @@ class AuditCommand extends AbstractCommand
             $result = $this->cacheManager->get($url->getUrl());
             $hash = $this->hashFromResources($result);
             $auditResult = $auditManager->analyze($url, $result, $hash);
-            if (\count($auditResult->getPa11y()) > 0) {
-                $rapport->addAccessibilityError($url->getUrl(), \count($auditResult->getPa11y()));
+            if (!$auditResult->isValid()) {
+                $rapport->addBrokenLink($auditResult->getUrlReport());
             }
-            $this->treatLinks($auditResult);
+            if (\count($auditResult->getPa11y()) > 0) {
+                $rapport->addAccessibilityError($url->getUrl(), \count($auditResult->getPa11y()), $auditResult->getAccessibility());
+            }
+            if (\count($auditResult->getSecurityWarnings()) > 0) {
+                $rapport->addSecurityError($url->getUrl(), \count($auditResult->getSecurityWarnings()), $auditResult->getBestPractices());
+            }
+            if (\count($auditResult->getWarnings()) > 0) {
+                $rapport->addWarning($url->getUrl(), $auditResult->getWarnings());
+            }
+            $this->treatLinks($auditResult, $rapport);
             if (!$this->dryRun) {
                 $assets = $auditResult->uploadAssets($this->adminHelper->getCoreApi()->file());
                 $api->save($auditResult->getUrl()->getId(), $auditResult->getRawData($assets));
@@ -182,14 +191,18 @@ class AuditCommand extends AbstractCommand
         return \hash_final($hashContext);
     }
 
-    private function treatLinks(AuditResult $auditResult): void
+    private function treatLinks(AuditResult $auditResult, Rapport $rapport): void
     {
         foreach ($auditResult->getLinks() as $link) {
             if ($this->auditCache->inHosts($link->getHost())) {
                 $this->auditCache->addUrl($link);
                 $auditResult->addInternalLink($link);
             } else {
-                $auditResult->addExternalLink($this->cacheManager->testUrl($link));
+                $urlReport = $this->cacheManager->testUrl($link);
+                if (!$urlReport->isValid()) {
+                    $rapport->addBrokenLink($urlReport);
+                }
+                $auditResult->addExternalLink($urlReport);
             }
         }
     }

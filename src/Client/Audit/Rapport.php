@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Client\Audit;
 
+use App\Client\HttpClient\UrlReport;
 use EMS\CommonBundle\Common\SpreadsheetGeneratorService;
 use EMS\CommonBundle\Contracts\SpreadsheetGeneratorServiceInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -14,6 +15,10 @@ class Rapport
     private array $accessibilityErrors = [['URL', 'WCAG2AA']];
     /** @var string[][] */
     private array $securityErrors = [['URL', 'Missing headers']];
+    /** @var string[][] */
+    private array $brokenLinks = [['URL', 'Status Code', 'Error message']];
+    /** @var string[][] */
+    private array $warnings = [['URL', 'First warning', 'Warnings']];
     private string $filename;
     private SpreadsheetGeneratorService $spreadsheetGeneratorService;
 
@@ -31,6 +36,14 @@ class Rapport
             SpreadsheetGeneratorServiceInterface::CONTENT_FILENAME => 'Audit-Rapport.xlsx',
             SpreadsheetGeneratorServiceInterface::SHEETS => [
                 [
+                    'name' => 'Broken links',
+                    'rows' => \array_values($this->brokenLinks),
+                ],
+                [
+                    'name' => 'Warnings',
+                    'rows' => \array_values($this->warnings),
+                ],
+                [
                     'name' => 'Accessibility',
                     'rows' => \array_values($this->accessibilityErrors),
                 ],
@@ -43,13 +56,26 @@ class Rapport
         $this->spreadsheetGeneratorService->generateSpreadsheetFile($config, $this->filename);
     }
 
-    public function addAccessibilityError(string $url, int $errorCount): void
+    public function addAccessibilityError(string $url, int $errorCount, ?float $score): void
     {
-        $this->accessibilityErrors[] = [$url, \strval($errorCount)];
+        $this->accessibilityErrors[] = [$url, \strval($errorCount), null === $score ? '' : \strval($score)];
     }
 
-    public function addSecurityError(string $url, int $count): void
+    public function addSecurityError(string $url, int $count, ?float $score): void
     {
-        $this->securityErrors[] = [$url, \strval($count)];
+        $this->securityErrors[] = [$url, \strval($count), null === $score ? '' : \strval($score)];
+    }
+
+    public function addBrokenLink(UrlReport $urlReport): void
+    {
+        $this->brokenLinks[] = [$urlReport->getUrl()->getUrl(), \strval($urlReport->getStatusCode()), $urlReport->getMessage() ?? ''];
+    }
+
+    /**
+     * @param string[] $warning
+     */
+    public function addWarning(string $url, array $warning): void
+    {
+        $this->warnings[] = [$url, $warning[0] ?? '', \strval(\count($warning))];
     }
 }

@@ -33,4 +33,9 @@ class UrlReport
     {
         return $this->message;
     }
+
+    public function isValid(): bool
+    {
+        return null === $this->message;
+    }
 }
