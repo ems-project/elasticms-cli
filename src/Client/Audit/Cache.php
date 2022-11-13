@@ -19,14 +19,13 @@ use Symfony\Component\Serializer\Serializer;
 
 class Cache
 {
-    private Url $baseUrl;
+    /** @var array<string, Url> */
+    private array $urls = [];
     /** @var string[] */
-    private array $urls;
-    /** @var string[] */
-    private array $hosts;
+    private array $hosts = [];
     private LoggerInterface $logger;
-    private ?int $lastUpdated = null;
-    private int $current = -1;
+    private ?string $lastUpdated = null;
+    private ?string $current = null;
     private ?string $status = null;
 
     public function __construct(?Url $baseUrl = null, ?LoggerInterface $logger = null)
@@ -35,9 +34,7 @@ class Cache
             $this->logger = $logger;
         }
         if (null !== $baseUrl) {
-            $this->baseUrl = $baseUrl;
-            $this->urls = [$baseUrl->getUrl()];
-            $this->hosts = [$baseUrl->getHost()];
+            $this->addUrl($baseUrl);
         } else {
             $this->urls = [];
         }
@@ -84,7 +81,7 @@ class Cache
     }
 
     /**
-     * @return string[]
+     * @return Url[]
      */
     public function getUrls(): array
     {
@@ -92,37 +89,37 @@ class Cache
     }
 
     /**
-     * @param string[] $urls
+     * @param Url[] $urls
      */
     public function setUrls(array $urls): void
     {
         $this->urls = $urls;
     }
 
-    public function getLastUpdated(): ?int
+    public function getLastUpdated(): ?string
     {
         return $this->lastUpdated;
     }
 
-    public function setLastUpdated(?int $lastUpdated): void
+    public function setLastUpdated(?string $lastUpdated): void
     {
         $this->lastUpdated = $lastUpdated;
     }
 
     public function hasNext(): bool
     {
-        return isset($this->urls[$this->current + 1]);
+        return null !== $this->nextId();
     }
 
-    public function next(): string
+    public function next(): Url
     {
-        $this->lastUpdated = $this->current >= 0 ? $this->current : null;
-        ++$this->current;
+        $this->lastUpdated = $this->current;
+        $this->current = $this->nextId();
 
         return $this->current();
     }
 
-    public function current(): string
+    public function current(): Url
     {
         if (!isset($this->urls[$this->current])) {
             throw new \RuntimeException('Missing next url');
@@ -139,26 +136,22 @@ class Cache
         return $this->hosts;
     }
 
-    /**
-     * @param string[] $hosts
-     */
-    public function setHosts(array $hosts): void
+    public function addUrl(Url $url): void
     {
-        $this->hosts = $hosts;
-    }
-
-    public function addUrl(string $url): void
-    {
-        if (\in_array($url, $this->urls)) {
+        if (isset($this->urls[$url->getId()])) {
             return;
         }
-        $this->urls[] = $url;
+        if (!\in_array($url->getHost(), $this->hosts)) {
+            $this->hosts[] = $url->getHost();
+        }
+        $this->urls[$url->getId()] = $url;
     }
 
     public function progress(OutputInterface $output): void
     {
         $this->rewindOutput($output);
-        $this->status = \sprintf('%d urls audited, %d urls pending, %d urls found', $this->current + 1, \count($this->urls) - $this->current - 1, \count($this->urls));
+        $currentPosition = $this->currentPos();
+        $this->status = \sprintf('%d urls audited, %d urls pending, %d urls found', +1, \count($this->urls) - $currentPosition - 1, \count($this->urls));
         $output->write($this->status);
     }
 
@@ -178,8 +171,44 @@ class Cache
 
     public function reset(): void
     {
-        if (null !== $this->lastUpdated && $this->lastUpdated >= 0) {
+        if (null !== $this->lastUpdated) {
             $this->current = $this->lastUpdated;
         }
+    }
+
+    private function nextId(): ?string
+    {
+        $keys = \array_keys($this->urls);
+        if (null === $this->current) {
+            return $keys[0] ?? null;
+        }
+        $currentPos = \array_search($this->current, $keys, true);
+        if (false === $currentPos) {
+            throw new \RuntimeException(\sprintf('Current position %s not found', $this->current ?? 'null'));
+        }
+        $nextPos = $currentPos + 1;
+
+        return $keys[$nextPos] ?? null;
+    }
+
+    private function currentPos(): int
+    {
+        $keys = \array_keys($this->urls);
+        $position = \array_search($this->current, $keys);
+
+        return $position ?: 0;
+    }
+
+    public function inHosts(string $host): bool
+    {
+        return \in_array($host, $this->hosts);
+    }
+
+    /**
+     * @param string[] $hosts
+     */
+    public function setHosts(array $hosts): void
+    {
+        $this->hosts = $hosts;
     }
 }

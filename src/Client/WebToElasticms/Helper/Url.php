@@ -81,7 +81,7 @@ class Url
         return $path;
     }
 
-    public function getUrl(): string
+    public function getUrl(bool $withFragment = false): string
     {
         if (null !== $this->user && null !== $this->password) {
             $url = \sprintf('%s://%s:%s@%s', $this->scheme, $this->user, $this->password, $this->host);
@@ -93,11 +93,11 @@ class Url
         } else {
             $url = \sprintf('%s%s', $url, $this->path);
         }
-        if (null !== $this->fragment) {
-            $url = \sprintf('%s#%s', $url, $this->fragment);
-        }
         if (null !== $this->query) {
             $url = \sprintf('%s?%s', $url, $this->query);
+        }
+        if ($withFragment && null !== $this->fragment) {
+            $url = \sprintf('%s#%s', $url, $this->fragment);
         }
 
         return $url;
@@ -162,5 +162,10 @@ class Url
     public function isCrawlable(): bool
     {
         return \in_array($this->getScheme(), ['http', 'https']);
+    }
+
+    public function getId(): string
+    {
+        return \sha1($this->getUrl());
     }
 }

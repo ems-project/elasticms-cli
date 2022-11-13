@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Command\Web;
 
 use App\Client\Audit\AuditManager;
+use App\Client\Audit\AuditResult;
 use App\Client\Audit\Cache;
 use App\Client\Audit\Rapport;
 use App\Client\HttpClient\CacheManager;
 use App\Client\HttpClient\HttpResult;
-use App\Client\HttpClient\UrlReport;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Commands;
 use EMS\CommonBundle\Common\Admin\AdminHelper;
@@ -19,7 +19,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\DomCrawler\Crawler;
 
 class AuditCommand extends AbstractCommand
 {
@@ -32,6 +31,7 @@ class AuditCommand extends AbstractCommand
     public const OPTION_DRY_RUN = 'dry-run';
     public const OPTION_PA11Y = 'pa11y';
     public const OPTION_TIKA = 'tika';
+    public const OPTION_ALL = 'all';
     public const OPTION_LIGHTHOUSE = 'lighthouse';
     public const OPTION_CONTENT_TYPE = 'content-type';
     public const OPTION_RAPPORTS_FOLDER = 'rapports-folder';
@@ -50,6 +50,7 @@ class AuditCommand extends AbstractCommand
     private bool $lighthouse;
     private bool $pa11y;
     private bool $tika;
+    private bool $all;
 
     public function __construct(AdminHelper $adminHelper)
     {
@@ -75,6 +76,8 @@ class AuditCommand extends AbstractCommand
             ->addOption(self::OPTION_DRY_RUN, null, InputOption::VALUE_NONE, 'don\'t update elasticms')
             ->addOption(self::OPTION_PA11Y, null, InputOption::VALUE_NONE, 'Add a pa11y accessibility audit')
             ->addOption(self::OPTION_LIGHTHOUSE, null, InputOption::VALUE_NONE, 'Add a Lighthouse audit')
+            ->addOption(self::OPTION_TIKA, null, InputOption::VALUE_NONE, 'Add a Tika audit')
+            ->addOption(self::OPTION_ALL, null, InputOption::VALUE_NONE, 'Add all audits (Tika, pa11y, lighhouse')
             ->addOption(self::OPTION_CONTENT_TYPE, null, InputOption::VALUE_OPTIONAL, 'Audit\'s content type', 'audit')
             ->addOption(self::OPTION_RAPPORTS_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where rapports stored', \getcwd())
             ->addOption(self::OPTION_CACHE_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where cache will stored', \implode(DIRECTORY_SEPARATOR, [\getcwd(), 'cache']))
@@ -93,6 +96,7 @@ class AuditCommand extends AbstractCommand
         $this->lighthouse = $this->getOptionBool(self::OPTION_LIGHTHOUSE);
         $this->pa11y = $this->getOptionBool(self::OPTION_PA11Y);
         $this->tika = $this->getOptionBool(self::OPTION_TIKA);
+        $this->all = $this->getOptionBool(self::OPTION_ALL);
         $this->rapportsFolder = $this->getOptionString(self::OPTION_RAPPORTS_FOLDER);
         $this->contentType = $this->getOptionString(self::OPTION_CONTENT_TYPE);
         $this->maxUpdate = $this->getOptionInt(self::OPTION_MAX_UPDATES);
@@ -109,9 +113,10 @@ class AuditCommand extends AbstractCommand
         $this->io->section('Load config');
         $this->cacheManager = new CacheManager($this->cacheFolder);
         $this->auditCache = $this->loadAuditCache();
+        $api = $this->adminHelper->getCoreApi()->data($this->contentType);
 
         $rapport = new Rapport($this->rapportsFolder);
-        $auditManager = new AuditManager($this->adminHelper->getCoreApi()->data($this->contentType), $this->adminHelper->getCoreApi()->file(), $rapport, $this->logger, $this->cacheFolder, $this->dryRun, $this->pa11y, $this->lighthouse, $this->tika);
+        $auditManager = new AuditManager($this->cacheManager, $this->logger, $this->all, $this->pa11y, $this->lighthouse, $this->tika);
 
         if ($this->continue) {
             $this->auditCache->reset();
@@ -121,13 +126,21 @@ class AuditCommand extends AbstractCommand
         $counter = 0;
         $finish = true;
         while ($this->auditCache->hasNext()) {
-            $result = $this->cacheManager->get($this->auditCache->next());
-            $externalLInks = $this->analyzeLinks($this->auditCache->current(), $result);
+            $url = $this->auditCache->next();
+            $result = $this->cacheManager->get($url->getUrl());
             $hash = $this->hashFromResources($result);
-            $auditManager->analyze($this->auditCache->current(), $result, $hash, $externalLInks);
+            $auditResult = $auditManager->analyze($url, $result, $hash);
+            if (\count($auditResult->getPa11y()) > 0) {
+                $rapport->addAccessibilityError($url->getUrl(), \count($auditResult->getPa11y()));
+            }
+            $this->treatLinks($auditResult);
+            if (!$this->dryRun) {
+                $assets = $auditResult->uploadAssets($this->adminHelper->getCoreApi()->file());
+                $api->save($auditResult->getUrl()->getId(), $auditResult->getRawData($assets));
+            }
             $this->auditCache->save($this->jsonPath);
             $rapport->save();
-            if ($this->continue && ++$counter >= $this->maxUpdate) {
+            if (++$counter >= $this->maxUpdate && $this->continue) {
                 $finish = false;
                 break;
             }
@@ -155,49 +168,6 @@ class AuditCommand extends AbstractCommand
         return Cache::deserialize($contents, $this->logger);
     }
 
-    /**
-     * @return UrlReport[]
-     */
-    private function analyzeLinks(string $url, HttpResult $result): array
-    {
-        if (!$result->isHtml()) {
-            $this->logger->notice(\sprintf('Mimetype %s not supported to analyze links', $result->getMimetype()));
-
-            return [];
-        }
-
-        $stream = $result->getResponse()->getBody();
-        $stream->rewind();
-        $crawler = new Crawler($stream->getContents());
-        $content = $crawler->filter('a');
-        $externalLinks = [];
-        for ($i = 0; $i < $content->count(); ++$i) {
-            $item = $content->eq($i);
-            $href = $item->attr('href');
-            if (null === $href || 0 === \strlen($href) || '#' === \substr($href, 0, 1)) {
-                continue;
-            }
-            $link = new Url($href, $url);
-
-            if (\in_array($link->getHost(), $this->auditCache->getHosts())) {
-                $this->addMissingInternalLink($link);
-            } else {
-                $externalLinks[] = $this->cacheManager->testUrl($link);
-            }
-        }
-
-        return $externalLinks;
-    }
-
-    private function addMissingInternalLink(Url $url): void
-    {
-        if (!$url->isCrawlable()) {
-            return;
-        }
-
-        $this->auditCache->addUrl($url->getUrl());
-    }
-
     private function hashFromResources(HttpResult $result): string
     {
         $hashContext = \hash_init('sha1');
@@ -210,5 +180,17 @@ class AuditCommand extends AbstractCommand
         }
 
         return \hash_final($hashContext);
+    }
+
+    private function treatLinks(AuditResult $auditResult): void
+    {
+        foreach ($auditResult->getLinks() as $link) {
+            if ($this->auditCache->inHosts($link->getHost())) {
+                $this->auditCache->addUrl($link);
+                $auditResult->addInternalLink($link);
+            } else {
+                $auditResult->addExternalLink($this->cacheManager->testUrl($link));
+            }
+        }
     }
 }

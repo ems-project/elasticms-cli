@@ -19,9 +19,11 @@ class CacheManager
     private Client $client;
     /** @var UrlReport[] */
     private array $cachedReport = [];
+    private string $cacheFolder;
 
     public function __construct(string $cacheFolder)
     {
+        $this->cacheFolder = $cacheFolder;
         $stack = HandlerStack::create();
         $stack->push(
             new CacheMiddleware(
@@ -39,7 +41,11 @@ class CacheManager
 
     public function get(string $url): HttpResult
     {
-        return new HttpResult($this->client->get($url));
+        try {
+            return new HttpResult($this->client->get($url));
+        } catch (ClientException|RequestException $e) {
+            return new HttpResult($e->getResponse(), $e->getMessage());
+        }
     }
 
     public function head(string $url): HttpResult
@@ -72,5 +78,10 @@ class CacheManager
         }
 
         return $report;
+    }
+
+    public function getCacheFolder(): string
+    {
+        return $this->cacheFolder;
     }
 }

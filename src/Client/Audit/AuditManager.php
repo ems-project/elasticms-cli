@@ -4,212 +4,157 @@ declare(strict_types=1);
 
 namespace App\Client\Audit;
 
+use App\Client\HttpClient\CacheManager;
 use App\Client\HttpClient\HttpResult;
-use App\Client\HttpClient\UrlReport;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Helper\LighthouseWrapper;
 use App\Helper\Pa11yWrapper;
 use App\Helper\TikaWrapper;
 use EMS\CommonBundle\Common\Standard\Json;
-use EMS\CommonBundle\Contracts\CoreApi\Endpoint\Data\DataInterface;
-use EMS\CommonBundle\Contracts\CoreApi\Endpoint\File\FileInterface;
-use GuzzleHttp\Psr7\BufferStream;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DomCrawler\Crawler;
 
 class AuditManager
 {
-    private DataInterface $dataApi;
-    private Rapport $rapport;
     private LoggerInterface $logger;
-    private bool $dryRun;
     private Pa11yWrapper $pa11yWrapper;
     private bool $lighthouse;
     private bool $pa11y;
-    private FileInterface $fileApi;
     private bool $tika;
-    private TikaWrapper $tikeWrapper;
+    private TikaWrapper $tikaWrapper;
+    private CacheManager $cacheManager;
+    private bool $all;
 
-    public function __construct(DataInterface $dataApi, FileInterface $fileApi, Rapport $rapport, LoggerInterface $logger, string $cacheFolder, bool $dryRun, bool $pa11y, bool $lighthouse, bool $tika)
+    public function __construct(CacheManager $cacheManager, LoggerInterface $logger, bool $all, bool $pa11y, bool $lighthouse, bool $tika)
     {
-        $this->dataApi = $dataApi;
-        $this->fileApi = $fileApi;
-        $this->rapport = $rapport;
+        $this->cacheManager = $cacheManager;
         $this->logger = $logger;
-        $this->dryRun = $dryRun;
         $this->pa11y = $pa11y;
         $this->lighthouse = $lighthouse;
         $this->tika = $tika;
+        $this->all = $all;
         $this->pa11yWrapper = new Pa11yWrapper();
-        $this->tikeWrapper = new TikaWrapper($cacheFolder);
+        $this->tikaWrapper = new TikaWrapper($cacheManager->getCacheFolder());
     }
 
-    /**
-     * @param UrlReport[] $externalLinks
-     */
-    public function analyze(string $url, HttpResult $result, string $hash, array $externalLinks): void
+    public function analyze(Url $url, HttpResult $result, string $hash): AuditResult
     {
-        $data = [
-            'import_hash_resources' => $hash,
-        ];
-        foreach ($externalLinks as $link) {
-            $data['links'][] = [
-                'url' => $link->getUrl()->getUrl(),
-                'message' => $link->getMessage(),
-                'status_code' => $link->getStatusCode(),
-            ];
+        $audit = new AuditResult($url, $hash);
+        $this->addRequestAudit($audit, $result);
+        $this->addCrawlerAudit($audit, $result);
+        if (!$result->isValid()) {
+            return $audit;
         }
-        $this->auditSecurity($url, $data, $result);
-        if ($this->pa11y) {
-            $this->auditAccessibility($url, $data, $result);
+        if ($this->all || $this->pa11y) {
+            $this->addPa11yAudit($audit, $result);
         }
-        if ($this->lighthouse) {
-            $this->auditLighthouse($url, $data);
+        if ($this->all || $this->lighthouse) {
+            $this->addLighthouseAudit($audit);
         }
-        if ($this->tika) {
-            $this->auditTika($url, $data, $result);
+        if ($this->all || $this->tika) {
+            $this->addTikaAudit($audit, $result);
         }
-        $this->info($url, $data, $result);
 
-        if ($this->dryRun) {
-            $this->logger->notice(Json::encode($data, true));
+        return $audit;
+    }
 
+    private function addRequestAudit(AuditResult $audit, HttpResult $result): void
+    {
+        $audit->setErrorMessage($result->getErrorMessage());
+        if (!$result->hasResponse()) {
             return;
         }
-        $this->dataApi->save(\sha1($url), $data);
-    }
+        $audit->setStatusCode($result->getResponse()->getStatusCode());
+        $audit->setMimetype($result->getMimetype());
 
-    /**
-     * @param mixed[] $data
-     *
-     * @return string[]
-     */
-    private function auditSecurityHeaders(array &$data, HttpResult $result): array
-    {
-        $missingHeaders = [];
         foreach (['Strict-Transport-Security', 'Content-Security-Policy', 'X-Frame-Options', 'X-Content-Type-Options', 'Referrer-Policy', 'Permissions-Policy'] as $header) {
             if ($result->getResponse()->hasHeader($header)) {
                 continue;
             }
-            $data['security'][] = [
-                'type' => 'missing-header',
-                'value' => $header,
-            ];
-            $missingHeaders[] = $header;
-        }
-
-        return $missingHeaders;
-    }
-
-    /**
-     * @param mixed[] $data
-     */
-    private function auditSecurity(string $url, array &$data, HttpResult $result): void
-    {
-        $missingHeaders = $this->auditSecurityHeaders($data, $result);
-        if (\count($missingHeaders) > 0) {
-            $this->rapport->addSecurityError($url, \count($missingHeaders));
+            $audit->addSecurityWaring('missing-header', $header);
         }
     }
 
-    /**
-     * @param mixed[] $data
-     */
-    private function auditAccessibility(string $url, array &$data, HttpResult $result): void
-    {
-        try {
-            $pa11y = $this->pa11y($url, $data, $result);
-            if (\count($pa11y) > 0) {
-                $this->rapport->addAccessibilityError($url, \count($pa11y));
-            }
-        } catch (\Throwable $e) {
-            $this->logger->critical(\sprintf('Pa11y audit for %s failed: %s', $url, $e->getMessage()));
-        }
-    }
-
-    /**
-     * @param mixed[] $data
-     *
-     * @return mixed[]
-     */
-    private function pa11y(string $url, array &$data, HttpResult $result): array
+    private function addPa11yAudit(AuditResult $audit, HttpResult $result): void
     {
         if (!$result->isHtml()) {
             $this->logger->notice(\sprintf('Mimetype %s not supported to audit accessibility', $result->getMimetype()));
 
-            return [];
+            return;
         }
-        $this->pa11yWrapper->run($url);
-        $data['pa11y'] = $this->pa11yWrapper->getJson();
 
-        return $data['pa11y'];
+        try {
+            $audit->setPa11y($this->pa11yWrapper->run($audit->getUrl()->getUrl())->getJson());
+        } catch (\Throwable $e) {
+            $this->logger->warning(\sprintf('Pa11y audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
+        }
     }
 
-    /**
-     * @param mixed[] $data
-     */
-    private function info(string $url, array &$data, HttpResult $result): void
-    {
-        $data['status_code'] = $result->getResponse()->getStatusCode();
-        $data['mimetype'] = $result->getMimetype();
-        $data['url'] = $url;
-        $urlInfo = new Url($url);
-        $data['host'] = $urlInfo->getHost();
-        $data['timestamp'] = (new \DateTimeImmutable())->format('c');
-    }
-
-    /**
-     * @param mixed[] $data
-     */
-    private function auditLighthouse(string $url, array &$data): void
+    private function addLighthouseAudit(AuditResult $audit): void
     {
         try {
-            $wrapper = (new LighthouseWrapper())->run($url);
+            $wrapper = (new LighthouseWrapper())->run($audit->getUrl()->getUrl());
             $lighthouse = $wrapper->getJson();
             if (isset($lighthouse['audits']['final-screenshot']['details']['data']) && \is_string($lighthouse['audits']['final-screenshot']['details']['data'])) {
-                $output_array = [];
-                \preg_match('/data:(?P<mimetype>[a-z\/\-\+]+\/[a-z\/\-\+]+);base64,(?P<base64>.+)/', $lighthouse['audits']['final-screenshot']['details']['data'], $output_array);
-                if (isset($output_array['mimetype']) && isset($output_array['base64']) && \is_string($output_array['mimetype']) && \is_string($output_array['base64'])) {
-                    $stream = new BufferStream();
-                    $stream->write(\base64_decode($output_array['base64']));
-                    $hash = $this->fileApi->uploadStream($stream, 'final-screenshot', $output_array['mimetype']);
-                    $data['screenshot'] = [
-                        'sha1' => $hash,
-                        'filename' => 'final-screenshot',
-                        'mimetype' => $output_array['mimetype'],
-                    ];
+                $audit->setLighthouseScreenshot($lighthouse['audits']['final-screenshot']['details']['data']);
+            }
+            if (\is_array($lighthouse['runWarnings'] ?? null)) {
+                foreach ($lighthouse['runWarnings'] as $warning) {
+                    $audit->addWarning(\strval($warning));
                 }
             }
-            if (\is_array($lighthouse['runWarnings'] ?? null) && \count($lighthouse['runWarnings']) > 0) {
-                $data['warning'] = $lighthouse['runWarnings'][0];
+            if (\is_float($lighthouse['categories']['performance']['score'])) {
+                $audit->setPerformance($lighthouse['categories']['performance']['score']);
             }
-            if (\is_array($lighthouse['categories'] ?? null)) {
-                foreach ($lighthouse['categories'] as $category) {
-                    $data[\sprintf('lighthouse_%s', $category['id'])] = $category['score'] ?? null;
-                }
+            if (\is_float($lighthouse['categories']['accessibility']['score'])) {
+                $audit->setAccessibility($lighthouse['categories']['accessibility']['score']);
+            }
+            if (\is_float($lighthouse['categories']['best-practices']['score'])) {
+                $audit->setBestPractices($lighthouse['categories']['best-practices']['score']);
+            }
+            if (\is_float($lighthouse['categories']['seo']['score'])) {
+                $audit->setSeo($lighthouse['categories']['seo']['score']);
             }
             unset($lighthouse['i18n']);
             unset($lighthouse['timing']);
             unset($lighthouse['audits']['full-page-screenshot']);
             unset($lighthouse['audits']['screenshot-thumbnails']);
             unset($lighthouse['audits']['final-screenshot']);
-            $data['lighthouse_report'] = Json::encode($lighthouse, true);
+            $audit->setLighthouseReport(Json::encode($lighthouse, true));
         } catch (\Throwable $e) {
-            $this->logger->critical(\sprintf('Lighthouse audit for %s failed: %s', $url, $e->getMessage()));
+            $this->logger->critical(\sprintf('Lighthouse audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
     }
 
-    /**
-     * @param mixed[] $data
-     */
-    private function auditTika(string $url, array &$data, HttpResult $result): void
+    private function addTikaAudit(AuditResult $audit, HttpResult $result): void
     {
         $stream = $result->getStream();
-        $data['locale'] = $this->tikeWrapper->getLocale($stream);
-        $data['content'] = $this->tikeWrapper->getText($stream);
-        foreach ($this->tikeWrapper->getLinks($stream) as $link) {
-            $data['links'][] = [
-                'url' => $link,
-            ];
+        $audit->setLocale($this->tikaWrapper->getLocale($stream));
+        $audit->setContent($this->tikaWrapper->getText($stream));
+        foreach ($this->tikaWrapper->getLinks($stream) as $link) {
+            $audit->addLinks(new Url($link, $audit->getUrl()->getUrl()));
+        }
+    }
+
+    private function addCrawlerAudit(AuditResult $audit, HttpResult $result): void
+    {
+        if (!$result->isHtml()) {
+            $this->logger->notice(\sprintf('Mimetype %s not supported by the Crawler', $result->getMimetype()));
+
+            return;
+        }
+
+        $stream = $result->getResponse()->getBody();
+        $stream->rewind();
+        $crawler = new Crawler($stream->getContents());
+        $content = $crawler->filter('a');
+        for ($i = 0; $i < $content->count(); ++$i) {
+            $item = $content->eq($i);
+            $href = $item->attr('href');
+            if (null === $href || 0 === \strlen($href) || '#' === \substr($href, 0, 1)) {
+                continue;
+            }
+            $audit->addLinks(new Url($href, $audit->getUrl()->getUrl()));
         }
     }
 }
