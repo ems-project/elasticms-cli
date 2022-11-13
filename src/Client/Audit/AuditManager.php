@@ -9,10 +9,10 @@ use App\Client\HttpClient\UrlReport;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Helper\LighthouseWrapper;
 use App\Helper\Pa11yWrapper;
-use App\Helper\StringStream;
 use EMS\CommonBundle\Common\Standard\Json;
 use EMS\CommonBundle\Contracts\CoreApi\Endpoint\Data\DataInterface;
 use EMS\CommonBundle\Contracts\CoreApi\Endpoint\File\FileInterface;
+use GuzzleHttp\Psr7\BufferStream;
 use Psr\Log\LoggerInterface;
 
 class AuditManager
@@ -161,7 +161,8 @@ class AuditManager
                 $output_array = [];
                 \preg_match('/data:(?P<mimetype>[a-z\/\-\+]+\/[a-z\/\-\+]+);base64,(?P<base64>.+)/', $lighthouse['audits']['final-screenshot']['details']['data'], $output_array);
                 if (isset($output_array['mimetype']) && isset($output_array['base64']) && \is_string($output_array['mimetype']) && \is_string($output_array['base64'])) {
-                    $stream = new StringStream(\base64_decode($output_array['base64']));
+                    $stream = new BufferStream();
+                    $stream->write(\base64_decode($output_array['base64']));
                     $hash = $this->fileApi->uploadStream($stream, 'final-screenshot', $output_array['mimetype']);
                     $data['screenshot'] = [
                         'sha1' => $hash,
