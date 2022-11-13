@@ -12,9 +12,9 @@ use Symfony\Component\HttpFoundation\HeaderUtils;
 class Rapport
 {
     /** @var string[][] */
-    private array $accessibilityErrors = [['URL', 'WCAG2AA']];
+    private array $accessibilityErrors = [['URL', 'WCAG2AA', 'Accessibility\'s score']];
     /** @var string[][] */
-    private array $securityErrors = [['URL', 'Missing headers']];
+    private array $securityErrors = [['URL', 'Missing headers', 'Best practice\'s score']];
     /** @var string[][] */
     private array $brokenLinks = [['URL', 'Status Code', 'Error message', 'Referer']];
     /** @var string[][] */
