@@ -229,12 +229,8 @@ class Cache
         $this->rapport = $rapport;
     }
 
-    /**
-     * @return Rapport|null
-     */
     public function getRapport(): ?Rapport
     {
         return $this->rapport;
     }
-
 }
