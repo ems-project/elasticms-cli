@@ -26,15 +26,15 @@ class AuditCommand extends AbstractCommand
 
     private const ARG_URL = 'url';
     private const OPTION_CONTINUE = 'continue';
-    public const OPTION_CACHE_FOLDER = 'cache-folder';
-    public const OPTION_MAX_UPDATES = 'max-updates';
-    public const OPTION_DRY_RUN = 'dry-run';
-    public const OPTION_PA11Y = 'pa11y';
-    public const OPTION_TIKA = 'tika';
-    public const OPTION_ALL = 'all';
-    public const OPTION_LIGHTHOUSE = 'lighthouse';
-    public const OPTION_CONTENT_TYPE = 'content-type';
-    public const OPTION_RAPPORTS_FOLDER = 'rapports-folder';
+    private const OPTION_CACHE_FOLDER = 'cache-folder';
+    private const OPTION_MAX_UPDATES = 'max-updates';
+    private const OPTION_DRY_RUN = 'dry-run';
+    private const OPTION_PA11Y = 'pa11y';
+    private const OPTION_TIKA = 'tika';
+    private const OPTION_ALL = 'all';
+    private const OPTION_LIGHTHOUSE = 'lighthouse';
+    private const OPTION_CONTENT_TYPE = 'content-type';
+    private const OPTION_RAPPORTS_FOLDER = 'rapports-folder';
     private ConsoleLogger $logger;
     private string $jsonPath;
     private string $cacheFolder;
