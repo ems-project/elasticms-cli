@@ -97,6 +97,7 @@ class AuditManager
 
         try {
             $this->pa11yAudit = new Pa11yWrapper($audit->getUrl()->getUrl());
+            $this->pa11yAudit->start();
         } catch (\Throwable $e) {
             $this->logger->warning(\sprintf('Pa11y audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
@@ -121,6 +122,7 @@ class AuditManager
     {
         try {
             $this->lighthouseAudit = new LighthouseWrapper($audit->getUrl()->getUrl());
+            $this->lighthouseAudit->start();
         } catch (\Throwable $e) {
             $this->logger->critical(\sprintf('Lighthouse audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
@@ -168,6 +170,9 @@ class AuditManager
             $this->tikaLocaleAudit = TikaWrapper::getLocale($stream, $this->cacheManager->getCacheFolder());
             $this->tikaTextAudit = TikaWrapper::getText($stream, $this->cacheManager->getCacheFolder());
             $this->tikaLinksAudit = TikaWrapper::getHtml($stream, $this->cacheManager->getCacheFolder());
+            $this->tikaLocaleAudit->start();
+            $this->tikaTextAudit->start();
+            $this->tikaLinksAudit->start();
         } catch (\Throwable $e) {
             $this->logger->critical(\sprintf('Tika audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
