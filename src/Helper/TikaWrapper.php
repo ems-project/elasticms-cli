@@ -13,11 +13,13 @@ use Symfony\Component\Process\Process;
 class TikaWrapper
 {
     public const BUFFER_SIZE = 8192;
+    private float $timeout;
     private string $tikaJar;
 
-    public function __construct(string $cacheFolder)
+    public function __construct(string $cacheFolder, float $timeout = 3 * 60.0)
     {
         $this->tikaJar = \join(DIRECTORY_SEPARATOR, [$cacheFolder, 'tika.jar']);
+        $this->timeout = $timeout;
     }
 
     protected function run(string $option, StreamInterface $stream, bool $trimWhiteSpaces = false): string
@@ -26,6 +28,7 @@ class TikaWrapper
         $this->initialize();
         $input = new InputStream();
         $process = new Process(['java', '-jar', $this->tikaJar, $option]);
+        $process->setTimeout($this->timeout);
         $process->setInput($input);
         $process->setWorkingDirectory(__DIR__);
         $process->start(function () {

@@ -41,10 +41,10 @@ class AuditManager
     {
         $audit = new AuditResult($url, $hash);
         $this->addRequestAudit($audit, $result);
-        $this->addCrawlerAudit($audit, $result);
         if (!$result->isValid()) {
             return $audit;
         }
+        $this->addCrawlerAudit($audit, $result);
         if ($this->all || $this->pa11y) {
             $this->addPa11yAudit($audit, $result);
         }
@@ -130,11 +130,15 @@ class AuditManager
 
     private function addTikaAudit(AuditResult $audit, HttpResult $result): void
     {
-        $stream = $result->getStream();
-        $audit->setLocale($this->tikaWrapper->getLocale($stream));
-        $audit->setContent($this->tikaWrapper->getText($stream));
-        foreach ($this->tikaWrapper->getLinks($stream) as $link) {
-            $audit->addLinks(new Url($link, $audit->getUrl()->getUrl()));
+        try {
+            $stream = $result->getStream();
+            $audit->setLocale($this->tikaWrapper->getLocale($stream));
+            $audit->setContent($this->tikaWrapper->getText($stream));
+            foreach ($this->tikaWrapper->getLinks($stream) as $link) {
+                $audit->addLinks(new Url($link, $audit->getUrl()->getUrl()));
+            }
+        } catch (\Throwable $e) {
+            $this->logger->critical(\sprintf('Tika audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
     }
 
@@ -146,17 +150,21 @@ class AuditManager
             return;
         }
 
-        $stream = $result->getResponse()->getBody();
-        $stream->rewind();
-        $crawler = new Crawler($stream->getContents());
-        $content = $crawler->filter('a');
-        for ($i = 0; $i < $content->count(); ++$i) {
-            $item = $content->eq($i);
-            $href = $item->attr('href');
-            if (null === $href || 0 === \strlen($href) || '#' === \substr($href, 0, 1)) {
-                continue;
+        try {
+            $stream = $result->getResponse()->getBody();
+            $stream->rewind();
+            $crawler = new Crawler($stream->getContents());
+            $content = $crawler->filter('a');
+            for ($i = 0; $i < $content->count(); ++$i) {
+                $item = $content->eq($i);
+                $href = $item->attr('href');
+                if (null === $href || 0 === \strlen($href) || '#' === \substr($href, 0, 1)) {
+                    continue;
+                }
+                $audit->addLinks(new Url($href, $audit->getUrl()->getUrl()));
             }
-            $audit->addLinks(new Url($href, $audit->getUrl()->getUrl()));
+        } catch (\Throwable $e) {
+            $this->logger->critical(\sprintf('Crawler audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
     }
 }
