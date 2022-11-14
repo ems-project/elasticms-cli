@@ -22,10 +22,14 @@ class Rapport
     private string $filename;
     private SpreadsheetGeneratorService $spreadsheetGeneratorService;
 
-    public function __construct(string $folder)
+    public function __construct()
+    {
+        $this->spreadsheetGeneratorService = new SpreadsheetGeneratorService();
+    }
+
+    public function setFolder(string $folder): void
     {
         $this->filename = $folder.DIRECTORY_SEPARATOR.\sprintf('Audit-Rapport-%s.xlsx', \date('Ymd-His'));
-        $this->spreadsheetGeneratorService = new SpreadsheetGeneratorService();
     }
 
     public function save(): void

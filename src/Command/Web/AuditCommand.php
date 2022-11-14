@@ -116,7 +116,11 @@ class AuditCommand extends AbstractCommand
         $this->auditCache = $this->loadAuditCache();
         $api = $this->adminHelper->getCoreApi()->data($this->contentType);
 
-        $rapport = new Rapport($this->rapportsFolder);
+        $rapport = $this->auditCache->getRapport();
+        if (null === $rapport) {
+            $rapport = new Rapport();
+        }
+        $rapport->setFolder($this->rapportsFolder);
         $auditManager = new AuditManager($this->cacheManager, $this->logger, $this->all, $this->pa11y, $this->lighthouse, $this->tika);
 
         if ($this->continue) {
