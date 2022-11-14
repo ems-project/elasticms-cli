@@ -1554,12 +1554,12 @@
                                     "class": "col-md-12",
                                     "lastOfRow": false,
                                     "helptext": null,
-                                    "icon": null,
                                     "prefixIcon": null,
                                     "prefixText": null,
                                     "suffixIcon": null,
                                     "suffixText": null,
-                                    "placeholder": null
+                                    "placeholder": null,
+                                    "icon": null
                                 },
                                 "mappingOptions": {
                                     "index": null,
@@ -1582,6 +1582,138 @@
                                 }
                             },
                             "orderKey": 21,
+                            "parent": null,
+                            "children": []
+                        },
+                        "replaced": []
+                    },
+                    {
+                        "class": "EMS\\CoreBundle\\Entity\\FieldType",
+                        "arguments": [],
+                        "properties": {
+                            "type": "EMS\\CoreBundle\\Form\\DataField\\DateTimeFieldType",
+                            "name": "lighthouse_timestamp",
+                            "contentType": null,
+                            "deleted": false,
+                            "description": null,
+                            "options": {
+                                "displayOptions": {
+                                    "label": "Lighthouse Timestamp",
+                                    "class": "col-md-12",
+                                    "lastOfRow": false,
+                                    "helptext": null,
+                                    "displayFormat": "D/MM/YYYY HH:mm:ss",
+                                    "parseFormat": "d/m/Y H:i:s",
+                                    "daysOfWeekDisabled": null,
+                                    "hoursDisabled": null
+                                },
+                                "mappingOptions": {
+                                    "index": null
+                                },
+                                "restrictionOptions": {
+                                    "mandatory": false,
+                                    "mandatory_if": null,
+                                    "minimum_role": null
+                                },
+                                "extraOptions": {
+                                    "extra": null,
+                                    "clear_on_copy": false,
+                                    "postProcessing": null
+                                },
+                                "raw_data": [],
+                                "migrationOptions": {
+                                    "protected": false
+                                }
+                            },
+                            "orderKey": 22,
+                            "parent": null,
+                            "children": []
+                        },
+                        "replaced": []
+                    },
+                    {
+                        "class": "EMS\\CoreBundle\\Entity\\FieldType",
+                        "arguments": [],
+                        "properties": {
+                            "type": "EMS\\CoreBundle\\Form\\DataField\\DateTimeFieldType",
+                            "name": "tika_timestamp",
+                            "contentType": null,
+                            "deleted": false,
+                            "description": null,
+                            "options": {
+                                "displayOptions": {
+                                    "label": "Tika Timestamp",
+                                    "class": "col-md-12",
+                                    "lastOfRow": false,
+                                    "helptext": null,
+                                    "displayFormat": "D/MM/YYYY HH:mm:ss",
+                                    "parseFormat": "d/m/Y H:i:s",
+                                    "daysOfWeekDisabled": null,
+                                    "hoursDisabled": null
+                                },
+                                "mappingOptions": {
+                                    "index": null
+                                },
+                                "restrictionOptions": {
+                                    "mandatory": false,
+                                    "mandatory_if": null,
+                                    "minimum_role": null
+                                },
+                                "extraOptions": {
+                                    "extra": null,
+                                    "clear_on_copy": false,
+                                    "postProcessing": null
+                                },
+                                "raw_data": [],
+                                "migrationOptions": {
+                                    "protected": false
+                                }
+                            },
+                            "orderKey": 23,
+                            "parent": null,
+                            "children": []
+                        },
+                        "replaced": []
+                    },
+                    {
+                        "class": "EMS\\CoreBundle\\Entity\\FieldType",
+                        "arguments": [],
+                        "properties": {
+                            "type": "EMS\\CoreBundle\\Form\\DataField\\DateTimeFieldType",
+                            "name": "pa11y_timestamp",
+                            "contentType": null,
+                            "deleted": false,
+                            "description": null,
+                            "options": {
+                                "displayOptions": {
+                                    "label": "pa11y Timestamp",
+                                    "class": "col-md-12",
+                                    "lastOfRow": false,
+                                    "helptext": null,
+                                    "displayFormat": "D/MM/YYYY HH:mm:ss",
+                                    "parseFormat": "d/m/Y H:i:s",
+                                    "daysOfWeekDisabled": null,
+                                    "hoursDisabled": null
+                                },
+                                "mappingOptions": {
+                                    "index": null
+                                },
+                                "restrictionOptions": {
+                                    "mandatory": false,
+                                    "mandatory_if": null,
+                                    "minimum_role": null
+                                },
+                                "extraOptions": {
+                                    "extra": null,
+                                    "clear_on_copy": false,
+                                    "postProcessing": null
+                                },
+                                "raw_data": [],
+                                "migrationOptions": {
+                                    "protected": false
+                                }
+                            },
+                            "orderKey": 24,
                             "parent": null,
                             "children": []
                         },

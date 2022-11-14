@@ -55,6 +55,7 @@ class AuditManager
         if ($this->all || $this->tika) {
             $this->startTikaAudits($audit, $result);
         }
+
         if ($this->all || $this->pa11y) {
             $this->addPa11yAudit($audit, $result);
         }
@@ -183,6 +184,7 @@ class AuditManager
         try {
             $audit->setLocale($this->tikaLocaleAudit->getOutput());
             $audit->setContent($this->tikaTextAudit->getOutput());
+            $audit->setTikaDatetime();
             if ($result->isHtml()) {
                 return;
             }

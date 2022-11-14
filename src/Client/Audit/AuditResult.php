@@ -36,6 +36,9 @@ class AuditResult
     private ?float $bestPractices = null;
     private ?string $mimetype;
     private \DateTimeImmutable $datetime;
+    private ?\DateTimeImmutable $tikaDatetime = null;
+    private ?\DateTimeImmutable $lighthouseDatetime = null;
+    private ?\DateTimeImmutable $pa11yDatetime = null;
     private ?string $locale = null;
     private ?string $content = null;
     private bool $valid = true;
@@ -98,6 +101,7 @@ class AuditResult
     public function setPa11y(array $pa11y)
     {
         $this->pa11y = $pa11y;
+        $this->pa11yDatetime = new \DateTimeImmutable();
     }
 
     /**
@@ -166,6 +170,7 @@ class AuditResult
     public function setLighthouseReport(string $report): void
     {
         $this->lighthouseReport = $report;
+        $this->lighthouseDatetime = new \DateTimeImmutable();
     }
 
     /**
@@ -243,6 +248,9 @@ class AuditResult
             'locale' => $this->locale,
             'content' => $this->content,
             'timestamp' => $this->datetime->format('c'),
+            'lighthouse_timestamp' => null === $this->lighthouseDatetime ? null : $this->lighthouseDatetime->format('c'),
+            'tika_timestamp' => null === $this->tikaDatetime ? null : $this->tikaDatetime->format('c'),
+            'pa11y_timestamp' => null === $this->pa11yDatetime ? null : $this->pa11yDatetime->format('c'),
         ]), function ($k) {
             return null !== $k;
         });
@@ -289,5 +297,10 @@ class AuditResult
     public function getBestPractices(): ?float
     {
         return $this->bestPractices;
+    }
+
+    public function setTikaDatetime(): void
+    {
+        $this->tikaDatetime = new \DateTimeImmutable();
     }
 }
