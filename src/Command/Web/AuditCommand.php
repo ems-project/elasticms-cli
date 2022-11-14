@@ -14,6 +14,7 @@ use App\Client\WebToElasticms\Helper\Url;
 use App\Commands;
 use EMS\CommonBundle\Common\Admin\AdminHelper;
 use EMS\CommonBundle\Common\Command\AbstractCommand;
+use EMS\CommonBundle\Common\Standard\Json;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -145,7 +146,11 @@ class AuditCommand extends AbstractCommand
             $this->treatLinks($auditResult, $rapport);
             if (!$this->dryRun) {
                 $assets = $auditResult->uploadAssets($this->adminHelper->getCoreApi()->file());
-                $api->save($auditResult->getUrl()->getId(), $auditResult->getRawData($assets));
+                $rawData = $auditResult->getRawData($assets);
+                $this->logger->notice(Json::encode($rawData, true));
+                $api->save($auditResult->getUrl()->getId(), $rawData);
+            } else {
+                $this->logger->notice(Json::encode($auditResult->getRawData([]), true));
             }
             $this->auditCache->save($this->jsonPath);
             $rapport->save();
