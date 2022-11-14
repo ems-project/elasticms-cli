@@ -4,77 +4,79 @@ declare(strict_types=1);
 
 namespace App\Helper;
 
-use EMS\CommonBundle\Common\Standard\Json;
 use Psr\Http\Message\StreamInterface;
 use Symfony\Component\DomCrawler\Crawler;
-use Symfony\Component\Process\InputStream;
-use Symfony\Component\Process\Process;
 
-class TikaWrapper
+class TikaWrapper extends ProcessWrapper
 {
-    public const BUFFER_SIZE = 8192;
-    private float $timeout;
     private string $tikaJar;
+    private bool $trimWhiteSpaces;
 
-    public function __construct(string $cacheFolder, float $timeout = 3 * 60.0)
+    private function __construct(StreamInterface $stream, string $option, string $cacheFolder, bool $trimWhiteSpaces = false, float $timeout = 3 * 60.0)
     {
         $this->tikaJar = \join(DIRECTORY_SEPARATOR, [$cacheFolder, 'tika.jar']);
-        $this->timeout = $timeout;
+        $this->trimWhiteSpaces = $trimWhiteSpaces;
+        parent::__construct(['java', '-jar', $this->tikaJar, $option], $stream, $timeout);
     }
 
-    protected function run(string $option, StreamInterface $stream, bool $trimWhiteSpaces = false): string
+    public static function getLocale(StreamInterface $stream, string $cacheFolder, bool $trimWhiteSpaces = true): TikaWrapper
     {
-        $text = $stream->getContents();
-        $this->initialize();
-        $input = new InputStream();
-        $process = new Process(['java', '-jar', $this->tikaJar, $option]);
-        $process->setTimeout($this->timeout);
-        $process->setInput($input);
-        $process->setWorkingDirectory(__DIR__);
-        $process->start(function () {
-        }, [
-            'LANG' => 'en_US.utf-8',
-        ]);
+        return new self($stream, '--language', $cacheFolder, $trimWhiteSpaces);
+    }
 
-        if ($stream->isSeekable() && $stream->tell() > 0) {
-            $stream->rewind();
+    public static function getHtml(StreamInterface $stream, string $cacheFolder): TikaWrapper
+    {
+        return new self($stream, '--html', $cacheFolder);
+    }
+
+    public static function getText(StreamInterface $stream, string $cacheFolder, bool $trimWhiteSpaces = true): TikaWrapper
+    {
+        return new self($stream, '--text', $cacheFolder, $trimWhiteSpaces);
+    }
+
+    public static function getTextMain(StreamInterface $stream, string $cacheFolder, bool $trimWhiteSpaces = true): TikaWrapper
+    {
+        return new self($stream, '--text-main', $cacheFolder, $trimWhiteSpaces);
+    }
+
+    public static function getMetadata(StreamInterface $stream, string $cacheFolder, bool $trimWhiteSpaces = true): TikaWrapper
+    {
+        return new self($stream, '--metadata', $cacheFolder, $trimWhiteSpaces);
+    }
+
+    public static function getJsonMetadata(StreamInterface $stream, string $cacheFolder): TikaWrapper
+    {
+        return new self($stream, '--json', $cacheFolder);
+    }
+
+    public static function getDocumentType(StreamInterface $stream, string $cacheFolder): TikaWrapper
+    {
+        return new self($stream, '--detect', $cacheFolder, true);
+    }
+
+    public function getOutput(): string
+    {
+        if ($this->trimWhiteSpaces) {
+            return \trim(\preg_replace('!\s+!', ' ', parent::getOutput()) ?? '');
         }
 
-        while (!$stream->eof()) {
-            $input->write($stream->read(self::BUFFER_SIZE));
+        return parent::getOutput();
+    }
+
+    protected function initialize(): void
+    {
+        if (\file_exists($this->tikaJar)) {
+            return;
         }
-        $input->write($text);
-        $input->close();
-        $process->wait();
-
-        if ($trimWhiteSpaces) {
-            return \trim(\preg_replace('!\s+!', ' ', $process->getOutput()) ?? '');
-        }
-
-        return $process->getOutput();
-    }
-
-    public function getWordCount(StreamInterface $stream): int
-    {
-        return \str_word_count($this->getText($stream));
-    }
-
-    public function getXHTML(StreamInterface $stream): string
-    {
-        return $this->run('--xml', $stream);
-    }
-
-    public function getHTML(StreamInterface $stream): string
-    {
-        return $this->run('--html', $stream);
+        \file_put_contents($this->tikaJar, \fopen('https://dlcdn.apache.org/tika/2.6.0/tika-app-2.6.0.jar', 'rb'));
     }
 
     /**
      * @return string[]
      */
-    public function getLinks(StreamInterface $stream): array
+    public function getLinks(): array
     {
-        $html = $this->getHTML($stream);
+        $html = $this->getOutput();
         $crawler = new Crawler($html);
         $content = $crawler->filter('a');
         $externalLinks = [];
@@ -88,53 +90,5 @@ class TikaWrapper
         }
 
         return $externalLinks;
-    }
-
-    public function getText(StreamInterface $stream, bool $trimWhiteSpaces = false): string
-    {
-        $text = $this->run('--text', $stream, $trimWhiteSpaces);
-
-        return $text;
-    }
-
-    public function getTextMain(StreamInterface $stream, bool $trimWhiteSpaces = false): string
-    {
-        return $this->run('--text-main', $stream, $trimWhiteSpaces);
-    }
-
-    public function getMetadata(StreamInterface $stream, bool $trimWhiteSpaces = false): string
-    {
-        return $this->run('--metadata', $stream, $trimWhiteSpaces);
-    }
-
-    /**
-     * @return mixed[]
-     */
-    public function getJson(StreamInterface $stream): array
-    {
-        return Json::decode($this->run('--json', $stream));
-    }
-
-    public function getXmp(StreamInterface $stream): string
-    {
-        return $this->run('--xmp', $stream);
-    }
-
-    public function getLocale(StreamInterface $stream): string
-    {
-        return $this->run('--language', $stream, true);
-    }
-
-    public function getDocumentType(StreamInterface $stream): string
-    {
-        return $this->run('--detect', $stream, true);
-    }
-
-    private function initialize(): void
-    {
-        if (\file_exists($this->tikaJar)) {
-            return;
-        }
-        \file_put_contents($this->tikaJar, \fopen('https://dlcdn.apache.org/tika/2.6.0/tika-app-2.6.0.jar', 'rb'));
     }
 }

@@ -13,33 +13,30 @@ class TikaTest extends TestCase
 {
     public function testLocales(): void
     {
-        $tikaWrapper = new TikaWrapper(\sys_get_temp_dir());
         $streamFrench = new BufferStream();
         $streamFrench->write('Bonjour, comment allez-vous?');
         $streamDutch = new BufferStream();
         $streamDutch->write('Hoi, hoe gaat het met je vanmorgen?');
-        $this->assertEquals('fr', $tikaWrapper->getLocale($streamFrench));
-        $this->assertEquals('nl', $tikaWrapper->getLocale($streamDutch));
+        $this->assertEquals('fr', TikaWrapper::getLocale($streamFrench, \sys_get_temp_dir())->getOutput());
+        $this->assertEquals('nl', TikaWrapper::getLocale($streamDutch, \sys_get_temp_dir())->getOutput());
     }
 
     public function testWordFile(): void
     {
-        $tikaWrapper = new TikaWrapper(\sys_get_temp_dir());
         $bonjourDocx = new Stream(\fopen(\join(DIRECTORY_SEPARATOR, [__DIR__, 'resources', 'Bonjour.docx']), 'r'));
-        $this->assertEquals('fr', $tikaWrapper->getLocale($bonjourDocx));
-        $this->assertEquals('Bonjour, comment allez-vous ? Voici un lien vers google. Bonne journée.', $tikaWrapper->getText($bonjourDocx, true));
-        $json = $tikaWrapper->getJson($bonjourDocx);
+        $this->assertEquals('fr', TikaWrapper::getLocale($bonjourDocx, \sys_get_temp_dir())->getOutput());
+        $this->assertEquals('Bonjour, comment allez-vous ? Voici un lien vers google. Bonne journée.', TikaWrapper::getText($bonjourDocx, \sys_get_temp_dir())->getOutput());
+        $json = TikaWrapper::getJsonMetadata($bonjourDocx, \sys_get_temp_dir())->getJson();
         $this->assertEquals('Mathieu De Keyzer', $json['dc:creator'] ?? null);
         $this->assertEquals('Texte de test tika', $json['dc:title'] ?? null);
-        $this->assertEquals(['https://www.google.com/'], $tikaWrapper->getLinks($bonjourDocx));
+        $this->assertEquals(['https://www.google.com/'], TikaWrapper::getHtml($bonjourDocx, \sys_get_temp_dir())->getLinks());
     }
 
     public function testPdfFile(): void
     {
-        $tikaWrapper = new TikaWrapper(\sys_get_temp_dir());
         $bonjourDocx = new Stream(\fopen(\join(DIRECTORY_SEPARATOR, [__DIR__, 'resources', 'Bonjour.pdf']), 'r'));
-        $this->assertEquals('fr', $tikaWrapper->getLocale($bonjourDocx));
-        $this->assertEquals('Bonjour, comment allez-vous ? Voici un lien vers google. Bonne journée. https://www.google.com/', $tikaWrapper->getText($bonjourDocx, true));
-        $this->assertEquals(['https://www.google.com/'], $tikaWrapper->getLinks($bonjourDocx));
+        $this->assertEquals('fr', TikaWrapper::getLocale($bonjourDocx, \sys_get_temp_dir())->getOutput());
+        $this->assertEquals('Bonjour, comment allez-vous ? Voici un lien vers google. Bonne journée. https://www.google.com/', TikaWrapper::getText($bonjourDocx, \sys_get_temp_dir())->getOutput());
+        $this->assertEquals(['https://www.google.com/'], TikaWrapper::getHtml($bonjourDocx, \sys_get_temp_dir())->getLinks());
     }
 }

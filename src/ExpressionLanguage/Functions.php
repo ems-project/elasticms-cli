@@ -95,8 +95,8 @@ class Functions
 
     public static function pa11y(string $url): string
     {
-        $wrapper = new Pa11yWrapper();
-        $wrapper->run($url);
+        $wrapper = new Pa11yWrapper($url);
+        $wrapper->start();
 
         return $wrapper->getOutput();
     }

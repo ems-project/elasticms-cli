@@ -17,13 +17,16 @@ use Symfony\Component\DomCrawler\Crawler;
 class AuditManager
 {
     private LoggerInterface $logger;
-    private Pa11yWrapper $pa11yWrapper;
     private bool $lighthouse;
     private bool $pa11y;
     private bool $tika;
-    private TikaWrapper $tikaWrapper;
     private CacheManager $cacheManager;
     private bool $all;
+    private Pa11yWrapper $pa11yAudit;
+    private LighthouseWrapper $lighthouseAudit;
+    private TikaWrapper $tikaLocaleAudit;
+    private TikaWrapper $tikaTextAudit;
+    private TikaWrapper $tikaLinksAudit;
 
     public function __construct(CacheManager $cacheManager, LoggerInterface $logger, bool $all, bool $pa11y, bool $lighthouse, bool $tika)
     {
@@ -33,8 +36,6 @@ class AuditManager
         $this->lighthouse = $lighthouse;
         $this->tika = $tika;
         $this->all = $all;
-        $this->pa11yWrapper = new Pa11yWrapper();
-        $this->tikaWrapper = new TikaWrapper($cacheManager->getCacheFolder());
     }
 
     public function analyze(Url $url, HttpResult $result, string $hash): AuditResult
@@ -46,13 +47,22 @@ class AuditManager
         }
         $this->addCrawlerAudit($audit, $result);
         if ($this->all || $this->pa11y) {
+            $this->startPa11yAudit($audit, $result);
+        }
+        if ($this->all || $this->lighthouse) {
+            $this->startLighthouseAudit($audit);
+        }
+        if ($this->all || $this->tika) {
+            $this->startTikaAudits($audit, $result);
+        }
+        if ($this->all || $this->pa11y) {
             $this->addPa11yAudit($audit, $result);
         }
         if ($this->all || $this->lighthouse) {
             $this->addLighthouseAudit($audit);
         }
         if ($this->all || $this->tika) {
-            $this->addTikaAudit($audit, $result);
+            $this->addTikaAudits($audit, $result);
         }
 
         return $audit;
@@ -77,6 +87,21 @@ class AuditManager
         }
     }
 
+    private function startPa11yAudit(AuditResult $audit, HttpResult $result): void
+    {
+        if (!$result->isHtml()) {
+            $this->logger->notice(\sprintf('Mimetype %s not supported to audit accessibility', $result->getMimetype()));
+
+            return;
+        }
+
+        try {
+            $this->pa11yAudit = new Pa11yWrapper($audit->getUrl()->getUrl());
+        } catch (\Throwable $e) {
+            $this->logger->warning(\sprintf('Pa11y audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
+        }
+    }
+
     private function addPa11yAudit(AuditResult $audit, HttpResult $result): void
     {
         if (!$result->isHtml()) {
@@ -86,17 +111,25 @@ class AuditManager
         }
 
         try {
-            $audit->setPa11y($this->pa11yWrapper->run($audit->getUrl()->getUrl())->getJson());
+            $audit->setPa11y($this->pa11yAudit->getJson());
         } catch (\Throwable $e) {
             $this->logger->warning(\sprintf('Pa11y audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
+        }
+    }
+
+    private function startLighthouseAudit(AuditResult $audit): void
+    {
+        try {
+            $this->lighthouseAudit = new LighthouseWrapper($audit->getUrl()->getUrl());
+        } catch (\Throwable $e) {
+            $this->logger->critical(\sprintf('Lighthouse audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
     }
 
     private function addLighthouseAudit(AuditResult $audit): void
     {
         try {
-            $wrapper = (new LighthouseWrapper())->run($audit->getUrl()->getUrl());
-            $lighthouse = $wrapper->getJson();
+            $lighthouse = $this->lighthouseAudit->getJson();
             if (isset($lighthouse['audits']['final-screenshot']['details']['data']) && \is_string($lighthouse['audits']['final-screenshot']['details']['data'])) {
                 $audit->setLighthouseScreenshot($lighthouse['audits']['final-screenshot']['details']['data']);
             }
@@ -128,13 +161,24 @@ class AuditManager
         }
     }
 
-    private function addTikaAudit(AuditResult $audit, HttpResult $result): void
+    private function startTikaAudits(AuditResult $audit, HttpResult $result): void
     {
         try {
             $stream = $result->getStream();
-            $audit->setLocale($this->tikaWrapper->getLocale($stream));
-            $audit->setContent($this->tikaWrapper->getText($stream));
-            foreach ($this->tikaWrapper->getLinks($stream) as $link) {
+            $this->tikaLocaleAudit = TikaWrapper::getLocale($stream, $this->cacheManager->getCacheFolder());
+            $this->tikaTextAudit = TikaWrapper::getText($stream, $this->cacheManager->getCacheFolder());
+            $this->tikaLinksAudit = TikaWrapper::getHtml($stream, $this->cacheManager->getCacheFolder());
+        } catch (\Throwable $e) {
+            $this->logger->critical(\sprintf('Tika audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
+        }
+    }
+
+    private function addTikaAudits(AuditResult $audit, HttpResult $result): void
+    {
+        try {
+            $audit->setLocale($this->tikaLocaleAudit->getOutput());
+            $audit->setContent($this->tikaTextAudit->getOutput());
+            foreach ($this->tikaLinksAudit->getLinks() as $link) {
                 $audit->addLinks(new Url($link, $audit->getUrl()->getUrl()));
             }
         } catch (\Throwable $e) {
