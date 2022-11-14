@@ -27,6 +27,8 @@ class Cache
     private ?string $lastUpdated = null;
     private ?string $current = null;
     private ?string $status = null;
+    private \DateTimeImmutable $startedDatetime;
+    private int $startedAt;
 
     public function __construct(?Url $baseUrl = null, ?LoggerInterface $logger = null)
     {
@@ -38,6 +40,8 @@ class Cache
         } else {
             $this->urls = [];
         }
+        $this->startedDatetime = new \DateTimeImmutable();
+        $this->startedAt = 0;
     }
 
     public function serialize(string $format = JsonEncoder::FORMAT): string
@@ -150,8 +154,14 @@ class Cache
     public function progress(OutputInterface $output): void
     {
         $this->rewindOutput($output);
-        $currentPosition = $this->currentPos();
-        $this->status = \sprintf('%d urls audited, %d urls pending, %d urls found', $currentPosition + 1, \count($this->urls) - $currentPosition - 1, \count($this->urls));
+        $treated = $this->currentPos() + 1;
+        $total = \count($this->urls);
+        $now = new \DateTimeImmutable();
+        $rate = \doubleval($now->getTimestamp() - $this->startedDatetime->getTimestamp()) / \doubleval($treated - $this->startedAt);
+        $estimateSeconds = \round($rate * ($total - $treated));
+        $estimateDatetime = new \DateTimeImmutable(\sprintf('+%s seconds', $estimateSeconds));
+        $dateIntervalFormat = $estimateSeconds > (24 * 60 * 60) ? '%a days %h:%I:%S' : '%h:%I:%S';
+        $this->status = \sprintf('%d urls audited, %d urls pending, %d urls found, rate %01.2f url/min, EAC in %s', $treated, $total - $treated, $total, 60.0 / $rate, $estimateDatetime->diff(new \DateTimeImmutable())->format($dateIntervalFormat));
         $output->write($this->status);
     }
 
@@ -173,6 +183,7 @@ class Cache
     {
         if (null !== $this->lastUpdated) {
             $this->current = $this->lastUpdated;
+            $this->startedAt = $this->currentPos();
         }
     }
 
