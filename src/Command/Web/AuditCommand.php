@@ -173,8 +173,10 @@ class AuditCommand extends AbstractCommand
         if (false === $contents) {
             throw new \RuntimeException('Unexpected false config file');
         }
+        $cache = Cache::deserialize($contents, $this->logger);
+        $cache->addUrl($this->baseUrl);
 
-        return Cache::deserialize($contents, $this->logger);
+        return $cache;
     }
 
     private function hashFromResources(HttpResult $result): string
