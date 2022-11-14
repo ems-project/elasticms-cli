@@ -183,6 +183,9 @@ class AuditManager
         try {
             $audit->setLocale($this->tikaLocaleAudit->getOutput());
             $audit->setContent($this->tikaTextAudit->getOutput());
+            if ($result->isHtml()) {
+                return;
+            }
             foreach ($this->tikaLinksAudit->getLinks() as $link) {
                 $audit->addLinks(new Url($link, $audit->getUrl()->getUrl()));
             }
