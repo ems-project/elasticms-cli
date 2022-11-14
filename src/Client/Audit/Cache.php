@@ -29,6 +29,7 @@ class Cache
     private ?string $status = null;
     private \DateTimeImmutable $startedDatetime;
     private int $startedAt;
+    private ?Rapport $rapport;
 
     public function __construct(?Url $baseUrl = null, ?LoggerInterface $logger = null)
     {
@@ -222,4 +223,18 @@ class Cache
     {
         $this->hosts = $hosts;
     }
+
+    public function setRapport(?Rapport $rapport): void
+    {
+        $this->rapport = $rapport;
+    }
+
+    /**
+     * @return Rapport|null
+     */
+    public function getRapport(): ?Rapport
+    {
+        return $this->rapport;
+    }
+
 }

@@ -152,6 +152,7 @@ class AuditCommand extends AbstractCommand
             } else {
                 $this->logger->notice(Json::encode($auditResult->getRawData([]), true));
             }
+            $this->auditCache->setRapport($rapport);
             $this->auditCache->save($this->jsonPath);
             $rapport->save();
             if (++$counter >= $this->maxUpdate && $this->continue) {
@@ -163,6 +164,7 @@ class AuditCommand extends AbstractCommand
         $this->auditCache->progressFinish($output, $counter);
 
         $this->io->section('Save cache and rapport');
+        $this->auditCache->setRapport($this->auditCache->hasNext() ? $rapport : null);
         $this->auditCache->save($this->jsonPath, $finish);
         $rapport->save();
 

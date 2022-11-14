@@ -78,4 +78,68 @@ class Rapport
     {
         $this->warnings[] = [$url, $warning[0] ?? '', \strval(\count($warning))];
     }
+
+    /**
+     * @return string[][]
+     */
+    public function getAccessibilityErrors(): array
+    {
+        return $this->accessibilityErrors;
+    }
+
+    /**
+     * @param string[][] $accessibilityErrors
+     */
+    public function setAccessibilityErrors(array $accessibilityErrors): void
+    {
+        $this->accessibilityErrors = $accessibilityErrors;
+    }
+
+    /**
+     * @return string[][]
+     */
+    public function getSecurityErrors(): array
+    {
+        return $this->securityErrors;
+    }
+
+    /**
+     * @param string[][] $securityErrors
+     */
+    public function setSecurityErrors(array $securityErrors): void
+    {
+        $this->securityErrors = $securityErrors;
+    }
+
+    /**
+     * @return string[][]
+     */
+    public function getBrokenLinks(): array
+    {
+        return $this->brokenLinks;
+    }
+
+    /**
+     * @param string[][] $brokenLinks
+     */
+    public function setBrokenLinks(array $brokenLinks): void
+    {
+        $this->brokenLinks = $brokenLinks;
+    }
+
+    /**
+     * @return string[][]
+     */
+    public function getWarnings(): array
+    {
+        return $this->warnings;
+    }
+
+    /**
+     * @param string[][] $warnings
+     */
+    public function setWarnings(array $warnings): void
+    {
+        $this->warnings = $warnings;
+    }
 }
