@@ -222,6 +222,7 @@ class AuditCommand extends AbstractCommand
         foreach ($auditResult->getLinks() as $link) {
             if (!$link->isCrawlable()) {
                 $rapport->addIgnoredUrl($link, 'Non-crawlable url');
+                continue;
             }
 
             if ($this->auditCache->inHosts($link->getHost())) {
