@@ -10,6 +10,7 @@ use App\Client\Audit\Cache;
 use App\Client\Audit\Rapport;
 use App\Client\HttpClient\CacheManager;
 use App\Client\HttpClient\HttpResult;
+use App\Client\HttpClient\UrlReport;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Commands;
 use EMS\CommonBundle\Common\Admin\AdminHelper;
@@ -133,6 +134,10 @@ class AuditCommand extends AbstractCommand
         while ($this->auditCache->hasNext()) {
             $url = $this->auditCache->next();
             $result = $this->cacheManager->get($url->getUrl());
+            if (!$result->hasResponse()) {
+                $rapport->addBrokenLink(new UrlReport($url, 0, $result->getErrorMessage()));
+                continue;
+            }
             $hash = $this->hashFromResources($result);
             $auditResult = $auditManager->analyze($url, $result, $hash);
             if (!$auditResult->isValid()) {
