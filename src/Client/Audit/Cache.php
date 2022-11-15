@@ -29,7 +29,7 @@ class Cache
     private ?string $status = null;
     private \DateTimeImmutable $startedDatetime;
     private int $startedAt;
-    private ?Rapport $rapport;
+    private ?Rapport $rapport = null;
 
     public function __construct(?Url $baseUrl = null, ?LoggerInterface $logger = null)
     {
