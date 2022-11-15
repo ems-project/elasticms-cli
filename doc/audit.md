@@ -66,11 +66,15 @@ This audit is performed on every external link found. It will index in elasticms
 
 ### The pa11Y audit
 
-This auditor can be activated with the flags `--pa11y` or `--all`. This auditor collect a [pa11y](https://pa11y.org/) accessibility audit and indexes it in elasticms.  
+This auditor can be activated with the flags `--pa11y` or `--all`.
+It only concerns HTML urls.
+This auditor collect a [pa11y](https://pa11y.org/) accessibility audit and indexes it in elasticms.  
 
-### The pa11Y audit
+### The Lighthouse audit
 
-This auditor can be activated with the flags `--lighthouse` or `--all`. This auditor collect a [Lighhouse](https://developer.chrome.com/docs/lighthouse/overview/) audit and indexes in elasticms:
+This auditor can be activated with the flags `--lighthouse` or `--all`.
+It only concerns HTML urls.
+This auditor collect a [Lighhouse](https://developer.chrome.com/docs/lighthouse/overview/) audit and indexes in elasticms:
 
 * The accessibility score
 * The performance score

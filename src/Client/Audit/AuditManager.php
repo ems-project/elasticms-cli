@@ -45,21 +45,21 @@ class AuditManager
         if (!$result->isValid()) {
             return $audit;
         }
-        $this->addCrawlerAudit($audit, $result);
-        if ($this->all || $this->pa11y) {
+        $this->addHtmlAudit($audit, $result);
+        if ($result->isHtml() && ($this->all || $this->pa11y)) {
             $this->startPa11yAudit($audit, $result);
         }
-        if ($this->all || $this->lighthouse) {
+        if ($result->isHtml() && ($this->all || $this->lighthouse)) {
             $this->startLighthouseAudit($audit);
         }
         if ($this->all || $this->tika) {
             $this->startTikaAudits($audit, $result);
         }
 
-        if ($this->all || $this->pa11y) {
+        if ($result->isHtml() && ($this->all || $this->pa11y)) {
             $this->addPa11yAudit($audit, $result);
         }
-        if ($this->all || $this->lighthouse) {
+        if ($result->isHtml() && ($this->all || $this->lighthouse)) {
             $this->addLighthouseAudit($audit);
         }
         if ($this->all || $this->tika) {
@@ -199,10 +199,10 @@ class AuditManager
         }
     }
 
-    private function addCrawlerAudit(AuditResult $audit, HttpResult $result): void
+    private function addHtmlAudit(AuditResult $audit, HttpResult $result): void
     {
         if (!$result->isHtml()) {
-            $this->logger->notice(\sprintf('Mimetype %s not supported by the Crawler', $result->getMimetype()));
+            $this->logger->notice(\sprintf('Mimetype %s not supported by the Html Audit', $result->getMimetype()));
 
             return;
         }
