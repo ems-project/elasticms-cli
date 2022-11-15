@@ -21,7 +21,7 @@ class Rapport
     /** @var string[][] */
     private array $ignoredLinks = [['Referer', 'URL', 'Error message']];
     /** @var string[][] */
-    private array $warnings = [['URL', 'First warning', 'Warnings']];
+    private array $warnings = [['URL', 'Warning message']];
     private string $filename;
     private SpreadsheetGeneratorService $spreadsheetGeneratorService;
 
@@ -83,11 +83,13 @@ class Rapport
     }
 
     /**
-     * @param string[] $warning
+     * @param string[] $warnings
      */
-    public function addWarning(string $url, array $warning): void
+    public function addWarning(string $url, array $warnings): void
     {
-        $this->warnings[] = [$url, $warning[0] ?? '', \strval(\count($warning))];
+        foreach ($warnings as $warning) {
+            $this->warnings[] = [$url, $warning];
+        }
     }
 
     /**
