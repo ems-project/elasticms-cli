@@ -55,6 +55,9 @@ This audit is performed on every valid HTML URL's response. This audit is used t
 This audit will index in elasticms:
 
 * External links
+* The document's title
+* The document's meta title
+* The document's canonical link
 
 ### The external link audit
 
@@ -90,5 +93,7 @@ This auditor can be activated with the flags `--tika` or `--all`. This auditor c
 
 * The locale
 * The indexable content
+* The document's title
+* The document's author
 
 This auditor is also used to extract links/urls form non html responses (i.e. PDF, .docx, ...) in order to test if they are broken. And, for internal links, to add them to the queue.

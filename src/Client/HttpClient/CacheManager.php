@@ -40,6 +40,9 @@ class CacheManager
         $this->client = new Client([
             'handler' => $stack,
             RequestOptions::ALLOW_REDIRECTS => $allowRedirect,
+            RequestOptions::HEADERS => [
+                'User-Agent' => 'elasticms-client/4.2',
+            ],
         ]);
     }
 

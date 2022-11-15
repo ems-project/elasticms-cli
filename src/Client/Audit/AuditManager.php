@@ -27,6 +27,7 @@ class AuditManager
     private TikaWrapper $tikaLocaleAudit;
     private TikaWrapper $tikaTextAudit;
     private TikaWrapper $tikaLinksAudit;
+    private TikaWrapper $tikaMetaAudit;
 
     public function __construct(CacheManager $cacheManager, LoggerInterface $logger, bool $all, bool $pa11y, bool $lighthouse, bool $tika)
     {
@@ -38,14 +39,14 @@ class AuditManager
         $this->all = $all;
     }
 
-    public function analyze(Url $url, HttpResult $result, string $hash): AuditResult
+    public function analyze(Url $url, HttpResult $result, string $hash, Rapport $rapport): AuditResult
     {
         $audit = new AuditResult($url, $hash);
         $this->addRequestAudit($audit, $result);
         if (!$result->isValid()) {
             return $audit;
         }
-        $this->addHtmlAudit($audit, $result);
+        $this->addHtmlAudit($audit, $result, $rapport);
         if ($result->isHtml() && ($this->all || $this->pa11y)) {
             $this->startPa11yAudit($audit, $result);
         }
@@ -174,9 +175,11 @@ class AuditManager
             $this->tikaLocaleAudit = TikaWrapper::getLocale($stream, $this->cacheManager->getCacheFolder());
             $this->tikaTextAudit = TikaWrapper::getText($stream, $this->cacheManager->getCacheFolder());
             $this->tikaLinksAudit = TikaWrapper::getHtml($stream, $this->cacheManager->getCacheFolder());
+            $this->tikaMetaAudit = TikaWrapper::getJsonMetadata($stream, $this->cacheManager->getCacheFolder());
             $this->tikaLocaleAudit->start();
             $this->tikaTextAudit->start();
             $this->tikaLinksAudit->start();
+            $this->tikaMetaAudit->start();
         } catch (\Throwable $e) {
             $this->logger->critical(\sprintf('Tika audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
@@ -194,12 +197,15 @@ class AuditManager
             foreach ($this->tikaLinksAudit->getLinks() as $link) {
                 $audit->addLinks(new Url($link, $audit->getUrl()->getUrl()));
             }
+            $meta = $this->tikaMetaAudit->getJson();
+            $audit->setTitle(null === ($meta['dc:title'] ?? null) ? null : \trim($meta['dc:title']));
+            $audit->setAuthor(null === ($meta['dc:author'] ?? null) ? null : \trim($meta['dc:author']));
         } catch (\Throwable $e) {
             $this->logger->critical(\sprintf('Tika audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
     }
 
-    private function addHtmlAudit(AuditResult $audit, HttpResult $result): void
+    private function addHtmlAudit(AuditResult $audit, HttpResult $result, Rapport $rapport): void
     {
         if (!$result->isHtml()) {
             $this->logger->notice(\sprintf('Mimetype %s not supported by the Html Audit', $result->getMimetype()));
@@ -220,8 +226,44 @@ class AuditManager
                 }
                 $audit->addLinks(new Url($href, $audit->getUrl()->getUrl()));
             }
+            $audit->setMetaTitle($this->getUniqueTextValue($rapport, $audit, $crawler, 'title'));
+            $audit->setTitle($this->getUniqueTextValue($rapport, $audit, $crawler, 'h1'));
+            $audit->setCanonical($this->getUniqueTextAttr($rapport, $audit, $crawler, 'link[rel="canonical"]', 'href'));
+            $audit->setAuthor($this->getUniqueTextAttr($rapport, $audit, $crawler, 'meta[name="author"]', 'content', false));
         } catch (\Throwable $e) {
             $this->logger->critical(\sprintf('Crawler audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
+    }
+
+    private function getUniqueTextValue(Rapport $rapport, AuditResult $audit, Crawler $crawler, string $selector): ?string
+    {
+        $tag = $crawler->filter($selector);
+        if (0 === $tag->count() || 0 === \strlen(\trim($tag->eq(0)->text()))) {
+            $rapport->addWarning($audit->getUrl(), [\sprintf('%s is missing', $selector)]);
+
+            return null;
+        }
+        if ($tag->count() > 1) {
+            $rapport->addWarning($audit->getUrl(), [\sprintf('%s is present %d times', $selector, $tag->count())]);
+        }
+
+        return \trim($tag->eq(0)->text());
+    }
+
+    private function getUniqueTextAttr(Rapport $rapport, AuditResult $audit, Crawler $crawler, string $selector, string $attr, bool $withWarnings = true): ?string
+    {
+        $tag = $crawler->filter($selector);
+        if (0 === $tag->count() || 0 === \strlen(\trim($tag->eq(0)->attr($attr) ?? ''))) {
+            if ($withWarnings) {
+                $rapport->addWarning($audit->getUrl(), [\sprintf('%s is missing', $selector)]);
+            }
+
+            return null;
+        }
+        if ($tag->count() > 1) {
+            $rapport->addWarning($audit->getUrl(), [\sprintf('%s is present %d times', $selector, $tag->count())]);
+        }
+
+        return \trim($tag->eq(0)->attr($attr) ?? '');
     }
 }

@@ -42,6 +42,10 @@ class AuditResult
     private ?string $locale = null;
     private ?string $content = null;
     private bool $valid = true;
+    private ?string $metaTitle = null;
+    private ?string $title = null;
+    private ?string $canonical = null;
+    private ?string $author = null;
 
     public function __construct(Url $url, string $hash)
     {
@@ -243,7 +247,11 @@ class AuditResult
             'host' => $this->url->getHost(),
             'links' => $links,
             'locale' => $this->locale,
+            'meta_title' => $this->metaTitle,
+            'title' => $this->title,
+            'canonical' => $this->canonical,
             'content' => $this->content,
+            'author' => $this->author,
             'timestamp' => $this->datetime->format('c'),
             'lighthouse_timestamp' => null === $this->lighthouseDatetime ? null : $this->lighthouseDatetime->format('c'),
             'tika_timestamp' => null === $this->tikaDatetime ? null : $this->tikaDatetime->format('c'),
@@ -299,5 +307,25 @@ class AuditResult
     public function setTikaDatetime(): void
     {
         $this->tikaDatetime = new \DateTimeImmutable();
+    }
+
+    public function setMetaTitle(?string $metaTitle): void
+    {
+        $this->metaTitle = $metaTitle;
+    }
+
+    public function setTitle(?string $title): void
+    {
+        $this->title = $title;
+    }
+
+    public function setCanonical(?string $canonical): void
+    {
+        $this->canonical = $canonical;
+    }
+
+    public function setAuthor(?string $author): void
+    {
+        $this->author = $author;
     }
 }

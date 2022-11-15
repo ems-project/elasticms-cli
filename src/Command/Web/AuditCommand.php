@@ -165,7 +165,7 @@ class AuditCommand extends AbstractCommand
                 continue;
             }
             $hash = $this->hashFromResources($result);
-            $auditResult = $auditManager->analyze($url, $result, $hash);
+            $auditResult = $auditManager->analyze($url, $result, $hash, $rapport);
             if (!$auditResult->isValid()) {
                 $rapport->addBrokenLink($auditResult->getUrlReport());
             }
