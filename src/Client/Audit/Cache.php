@@ -177,7 +177,7 @@ class Cache
     {
         if (null !== $this->status) {
             $length = \strlen($this->status);
-            $output->write(\sprintf("\033[%dD [%dD\033[%dD", $length, $length, $length));
+            $output->write(\sprintf("\033[%dD%s\033[%dD", $length, \str_repeat(' ', $length), $length));
         }
     }
 
