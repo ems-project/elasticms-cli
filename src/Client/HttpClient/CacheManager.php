@@ -50,7 +50,12 @@ class CacheManager
 
     public function head(string $url): HttpResult
     {
-        return new HttpResult($this->client->head($url));
+        $head = new HttpResult($this->client->head($url));
+        if ($head->hasResponse() && 405 === $head->getResponse()->getStatusCode()) {
+            return $this->get($url);
+        }
+
+        return $head;
     }
 
     public function testUrl(Url $url): UrlReport
