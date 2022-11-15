@@ -47,6 +47,10 @@ class Rapport
                     'rows' => \array_values($this->brokenLinks),
                 ],
                 [
+                    'name' => 'Ignored links',
+                    'rows' => \array_values($this->ignoredLinks),
+                ],
+                [
                     'name' => 'Warnings',
                     'rows' => \array_values($this->warnings),
                 ],
