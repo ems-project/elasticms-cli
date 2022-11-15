@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Client\Audit;
 
 use App\Client\HttpClient\UrlReport;
+use App\Client\WebToElasticms\Helper\Url;
 use EMS\CommonBundle\Common\SpreadsheetGeneratorService;
 use EMS\CommonBundle\Contracts\SpreadsheetGeneratorServiceInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -16,7 +17,9 @@ class Rapport
     /** @var string[][] */
     private array $securityErrors = [['URL', 'Missing headers', 'Best practice\'s score']];
     /** @var string[][] */
-    private array $brokenLinks = [['URL', 'Status Code', 'Error message', 'Referer']];
+    private array $brokenLinks = [['Referer', 'URL', 'Status Code', 'Error message']];
+    /** @var string[][] */
+    private array $ignoredLinks = [['Referer', 'URL', 'Error message']];
     /** @var string[][] */
     private array $warnings = [['URL', 'First warning', 'Warnings']];
     private string $filename;
@@ -72,7 +75,7 @@ class Rapport
 
     public function addBrokenLink(UrlReport $urlReport): void
     {
-        $this->brokenLinks[] = [$urlReport->getUrl()->getUrl(), \strval($urlReport->getStatusCode()), $urlReport->getMessage() ?? '', $urlReport->getUrl()->getReferer() ?? ''];
+        $this->brokenLinks[] = [$urlReport->getUrl()->getReferer() ?? '', $urlReport->getUrl()->getUrl(), \strval($urlReport->getStatusCode()), $urlReport->getMessage() ?? ''];
     }
 
     /**
@@ -145,5 +148,26 @@ class Rapport
     public function setWarnings(array $warnings): void
     {
         $this->warnings = $warnings;
+    }
+
+    public function addIgnoredUrl(Url $url, string $message): void
+    {
+        $this->ignoredLinks[] = [$url->getReferer() ?? '', $url->getUrl(), $message];
+    }
+
+    /**
+     * @return string[][]
+     */
+    public function getIgnoredLinks(): array
+    {
+        return $this->ignoredLinks;
+    }
+
+    /**
+     * @param string[][] $ignoredLinks
+     */
+    public function setIgnoredLinks(array $ignoredLinks): void
+    {
+        $this->ignoredLinks = $ignoredLinks;
     }
 }

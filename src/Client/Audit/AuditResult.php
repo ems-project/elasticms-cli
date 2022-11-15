@@ -198,9 +198,6 @@ class AuditResult
 
     public function addLinks(Url $url): void
     {
-        if (!$url->isCrawlable()) {
-            return;
-        }
         $this->links[$url->getId()] = $url;
     }
 

@@ -30,6 +30,7 @@ class AuditCommand extends AbstractCommand
     private const OPTION_CONTINUE = 'continue';
     private const OPTION_CACHE_FOLDER = 'cache-folder';
     private const OPTION_MAX_UPDATES = 'max-updates';
+    private const OPTION_IGNORE_REGEX = 'ignore-regex';
     private const OPTION_DRY_RUN = 'dry-run';
     private const OPTION_PA11Y = 'pa11y';
     private const OPTION_TIKA = 'tika';
@@ -53,6 +54,7 @@ class AuditCommand extends AbstractCommand
     private bool $pa11y;
     private bool $tika;
     private bool $all;
+    private ?string $ignoreRegex;
 
     public function __construct(AdminHelper $adminHelper)
     {
@@ -83,7 +85,8 @@ class AuditCommand extends AbstractCommand
             ->addOption(self::OPTION_CONTENT_TYPE, null, InputOption::VALUE_OPTIONAL, 'Audit\'s content type', 'audit')
             ->addOption(self::OPTION_RAPPORTS_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where rapports stored', \getcwd())
             ->addOption(self::OPTION_CACHE_FOLDER, null, InputOption::VALUE_OPTIONAL, 'Path to a folder where cache will stored', \implode(DIRECTORY_SEPARATOR, [\getcwd(), 'cache']))
-            ->addOption(self::OPTION_MAX_UPDATES, null, InputOption::VALUE_OPTIONAL, 'Maximum number of document that can be updated in 1 batch (if the continue option is activated)', 500);
+            ->addOption(self::OPTION_MAX_UPDATES, null, InputOption::VALUE_OPTIONAL, 'Maximum number of document that can be updated in 1 batch (if the continue option is activated)', 500)
+            ->addOption(self::OPTION_IGNORE_REGEX, null, InputOption::VALUE_OPTIONAL, 'Regex that will defined paths \'(^\/path_pattern|^\/second_pattern\' to ignore');
     }
 
     protected function initialize(InputInterface $input, OutputInterface $output): void
@@ -102,6 +105,7 @@ class AuditCommand extends AbstractCommand
         $this->rapportsFolder = $this->getOptionString(self::OPTION_RAPPORTS_FOLDER);
         $this->contentType = $this->getOptionString(self::OPTION_CONTENT_TYPE);
         $this->maxUpdate = $this->getOptionInt(self::OPTION_MAX_UPDATES);
+        $this->ignoreRegex = $this->getOptionStringNull(self::OPTION_IGNORE_REGEX);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -133,6 +137,10 @@ class AuditCommand extends AbstractCommand
         $finish = true;
         while ($this->auditCache->hasNext()) {
             $url = $this->auditCache->next();
+            if (null !== $this->ignoreRegex && \preg_match(\sprintf('/%s/', $this->ignoreRegex), $url->getPath())) {
+                $rapport->addIgnoredUrl($url, 'Ignored by regex');
+                continue;
+            }
             $result = $this->cacheManager->get($url->getUrl());
             if (!$result->hasResponse()) {
                 $rapport->addBrokenLink(new UrlReport($url, 0, $result->getErrorMessage()));
@@ -212,6 +220,10 @@ class AuditCommand extends AbstractCommand
     private function treatLinks(AuditResult $auditResult, Rapport $rapport): void
     {
         foreach ($auditResult->getLinks() as $link) {
+            if (!$link->isCrawlable()) {
+                $rapport->addIgnoredUrl($link, 'Non-crawlable url');
+            }
+
             if ($this->auditCache->inHosts($link->getHost())) {
                 $this->auditCache->addUrl($link);
                 $auditResult->addInternalLink($link);
