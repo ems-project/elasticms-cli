@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\ExpressionLanguage;
 
 use App\Helper\Pa11yWrapper;
