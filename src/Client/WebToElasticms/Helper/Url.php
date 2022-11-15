@@ -6,6 +6,7 @@ namespace App\Client\WebToElasticms\Helper;
 
 class Url
 {
+    private const ABSOLUTE_SCHEME = ['mailto', 'javascript'];
     private string $scheme;
     private string $host;
     private ?int $port;
@@ -55,6 +56,9 @@ class Url
 
     private function getAbsolutePath(string $path, string $relativeToPath): string
     {
+        if (\in_array($this->getScheme(), self::ABSOLUTE_SCHEME)) {
+            return $path;
+        }
         if ('/' !== \substr($relativeToPath, \strlen($relativeToPath) - 1)) {
             $lastSlash = \strripos($relativeToPath, '/');
             if (false === $lastSlash) {
@@ -83,7 +87,9 @@ class Url
 
     public function getUrl(bool $withFragment = false): string
     {
-        if (null !== $this->user && null !== $this->password) {
+        if (\in_array($this->getScheme(), self::ABSOLUTE_SCHEME)) {
+            $url = \sprintf('%s:', $this->scheme);
+        } elseif (null !== $this->user && null !== $this->password) {
             $url = \sprintf('%s://%s:%s@%s', $this->scheme, $this->user, $this->password, $this->host);
         } else {
             $url = \sprintf('%s://%s', $this->scheme, $this->host);
