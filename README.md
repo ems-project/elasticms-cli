@@ -7,4 +7,5 @@ This is a command client to interact with and elasticms admin with some helper c
 | Commands                                                                                                     | Description                                                  |
 |--------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------|
 | [emscli:web:migrate](https://github.com/ems-project/elasticms-client/blob/main/doc/webToElasticms.md)        | Migration web resources to elaticms documents                |
+| [emscli:web:audit](https://github.com/ems-project/elasticms-client/blob/main/doc/audit.md)                   | Audit a website                                              |
 | [emscli:documents:update](https://github.com/ems-project/elasticms-client/blob/main/doc/documents.md#update) | Update documents form excel or csv with custom configuration |   
