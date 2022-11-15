@@ -117,7 +117,7 @@ class AuditCommand extends AbstractCommand
         }
 
         $this->io->section('Load config');
-        $this->cacheManager = new CacheManager($this->cacheFolder);
+        $this->cacheManager = new CacheManager($this->cacheFolder, false);
         $this->auditCache = $this->loadAuditCache();
         $api = $this->adminHelper->getCoreApi()->data($this->contentType);
 
@@ -146,6 +146,24 @@ class AuditCommand extends AbstractCommand
                 $rapport->addBrokenLink(new UrlReport($url, 0, $result->getErrorMessage()));
                 continue;
             }
+            if (\in_array($result->getResponse()->getStatusCode(), [301, 302, 303, 307, 308])) {
+                if (!$result->getResponse()->hasHeader('Location')) {
+                    $rapport->addBrokenLink(new UrlReport($url, $result->getResponse()->getStatusCode(), 'Redirect without Location header'));
+                    continue;
+                }
+                $location = $result->getResponse()->getHeader('Location')[0] ?? null;
+                if (null === $location) {
+                    throw new \RuntimeException('Unexpected missing Location');
+                }
+                $link = new Url($location, $url->getPath());
+                if ($this->auditCache->inHosts($link->getHost())) {
+                    $this->auditCache->addUrl($link);
+                    $rapport->addWarning($url, [\sprintf('Redirect (%d) to %s', $result->getResponse()->getStatusCode(), $location)]);
+                } else {
+                    $rapport->addWarning($url, [\sprintf('External redirect (%d) to %s', $result->getResponse()->getStatusCode(), $location)]);
+                }
+                continue;
+            }
             $hash = $this->hashFromResources($result);
             $auditResult = $auditManager->analyze($url, $result, $hash);
             if (!$auditResult->isValid()) {
@@ -158,7 +176,7 @@ class AuditCommand extends AbstractCommand
                 $rapport->addSecurityError($url->getUrl(), \count($auditResult->getSecurityWarnings()), $auditResult->getBestPractices());
             }
             if (\count($auditResult->getWarnings()) > 0) {
-                $rapport->addWarning($url->getUrl(), $auditResult->getWarnings());
+                $rapport->addWarning($url, $auditResult->getWarnings());
             }
             $this->treatLinks($auditResult, $rapport);
             if (!$this->dryRun) {

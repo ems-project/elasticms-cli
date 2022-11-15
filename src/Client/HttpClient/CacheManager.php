@@ -9,6 +9,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\RequestOptions;
 use Kevinrob\GuzzleCache\CacheMiddleware;
 use Kevinrob\GuzzleCache\Storage\Psr6CacheStorage;
 use Kevinrob\GuzzleCache\Strategy\PrivateCacheStrategy;
@@ -21,7 +22,7 @@ class CacheManager
     private array $cachedReport = [];
     private string $cacheFolder;
 
-    public function __construct(string $cacheFolder)
+    public function __construct(string $cacheFolder, bool $allowRedirect = true)
     {
         $this->cacheFolder = $cacheFolder;
         $stack = HandlerStack::create();
@@ -36,7 +37,10 @@ class CacheManager
             'cache'
         );
         $stack->push(new CacheMiddleware(), 'cache');
-        $this->client = new Client(['handler' => $stack]);
+        $this->client = new Client([
+            'handler' => $stack,
+            RequestOptions::ALLOW_REDIRECTS => $allowRedirect,
+        ]);
     }
 
     public function get(string $url): HttpResult
