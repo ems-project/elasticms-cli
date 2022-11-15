@@ -176,7 +176,8 @@ class Cache
     protected function rewindOutput(OutputInterface $output): void
     {
         if (null !== $this->status) {
-            $output->write(\sprintf("\033[%dD", \strlen($this->status)));
+            $length = \strlen($this->status);
+            $output->write(\sprintf("\033[%dD [%dD\033[%dD", $length, $length, $length));
         }
     }
 
