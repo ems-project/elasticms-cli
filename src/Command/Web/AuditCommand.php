@@ -247,11 +247,15 @@ class AuditCommand extends AbstractCommand
                 $this->auditCache->addUrl($link);
                 $auditResult->addInternalLink($link);
             } else {
-                $urlReport = $this->cacheManager->testUrl($link);
-                if (!$urlReport->isValid()) {
-                    $rapport->addBrokenLink($urlReport);
+                try {
+                    $urlReport = $this->cacheManager->testUrl($link);
+                    if (!$urlReport->isValid()) {
+                        $rapport->addBrokenLink($urlReport);
+                    }
+                    $auditResult->addExternalLink($urlReport);
+                } catch (\Throwable $e) {
+                    $rapport->addBrokenLink(new UrlReport($link, 0, $e->getMessage()));
                 }
-                $auditResult->addExternalLink($urlReport);
             }
         }
     }
