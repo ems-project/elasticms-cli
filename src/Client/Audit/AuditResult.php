@@ -46,11 +46,11 @@ class AuditResult
     private ?string $title = null;
     private ?string $canonical = null;
     private ?string $author = null;
+    private int $size = 0;
 
-    public function __construct(Url $url, string $hash)
+    public function __construct(Url $url)
     {
         $this->url = $url;
-        $this->hash = $hash;
         $this->datetime = new \DateTimeImmutable();
     }
 
@@ -251,6 +251,7 @@ class AuditResult
             'title' => $this->title,
             'canonical' => $this->canonical,
             'content' => $this->content,
+            'size' => $this->size,
             'author' => $this->author,
             'timestamp' => $this->datetime->format('c'),
             'lighthouse_timestamp' => null === $this->lighthouseDatetime ? null : $this->lighthouseDatetime->format('c'),
@@ -327,5 +328,15 @@ class AuditResult
     public function setAuthor(?string $author): void
     {
         $this->author = $author;
+    }
+
+    public function setHash(string $hash): void
+    {
+        $this->hash = $hash;
+    }
+
+    public function setSize(int $size): void
+    {
+        $this->size = $size;
     }
 }

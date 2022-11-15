@@ -9,7 +9,6 @@ use App\Client\Audit\AuditResult;
 use App\Client\Audit\Cache;
 use App\Client\Audit\Rapport;
 use App\Client\HttpClient\CacheManager;
-use App\Client\HttpClient\HttpResult;
 use App\Client\HttpClient\UrlReport;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Commands;
@@ -138,15 +137,18 @@ class AuditCommand extends AbstractCommand
         while ($this->auditCache->hasNext()) {
             $url = $this->auditCache->next();
             if (null !== $this->ignoreRegex && \preg_match(\sprintf('/%s/', $this->ignoreRegex), $url->getPath())) {
+                $this->logger->notice('Ignored by regex');
                 $rapport->addIgnoredUrl($url, 'Ignored by regex');
                 continue;
             }
             $result = $this->cacheManager->get($url->getUrl());
             if (!$result->hasResponse()) {
+                $this->logger->notice('Broken link');
                 $rapport->addBrokenLink(new UrlReport($url, 0, $result->getErrorMessage()));
                 continue;
             }
             if (\in_array($result->getResponse()->getStatusCode(), [301, 302, 303, 307, 308])) {
+                $this->logger->notice('Redirect');
                 if (!$result->getResponse()->hasHeader('Location')) {
                     $rapport->addBrokenLink(new UrlReport($url, $result->getResponse()->getStatusCode(), 'Redirect without Location header'));
                     continue;
@@ -164,36 +166,43 @@ class AuditCommand extends AbstractCommand
                 }
                 continue;
             }
-            $hash = $this->hashFromResources($result);
-            $auditResult = $auditManager->analyze($url, $result, $hash, $rapport);
+            $auditResult = $auditManager->analyze($url, $result, $rapport);
+            $this->logger->notice('Analyzed');
             if (!$auditResult->isValid()) {
                 $rapport->addBrokenLink($auditResult->getUrlReport());
+                $this->logger->notice('Broken links added');
             }
             if (\count($auditResult->getPa11y()) > 0) {
                 $rapport->addAccessibilityError($url->getUrl(), \count($auditResult->getPa11y()), $auditResult->getAccessibility());
+                $this->logger->notice('Accessibility report added');
             }
             if (\count($auditResult->getSecurityWarnings()) > 0) {
                 $rapport->addSecurityError($url->getUrl(), \count($auditResult->getSecurityWarnings()), $auditResult->getBestPractices());
+                $this->logger->notice('Security warnings added');
             }
             if (\count($auditResult->getWarnings()) > 0) {
                 $rapport->addWarning($url, $auditResult->getWarnings());
+                $this->logger->notice('Warnings added');
             }
             $this->treatLinks($auditResult, $rapport);
+            $this->logger->notice('Ready');
             if (!$this->dryRun) {
                 $assets = $auditResult->uploadAssets($this->adminHelper->getCoreApi()->file());
                 $rawData = $auditResult->getRawData($assets);
-                $this->logger->notice(Json::encode($rawData, true));
+                $this->logger->debug(Json::encode($rawData, true));
                 $api->save($auditResult->getUrl()->getId(), $rawData);
             } else {
-                $this->logger->notice(Json::encode($auditResult->getRawData([]), true));
+                $this->logger->debug(Json::encode($auditResult->getRawData([]), true));
             }
+            $this->logger->notice('Document saved');
             $this->auditCache->setRapport($rapport);
             $this->auditCache->save($this->jsonPath);
-            $rapport->save();
+            $this->logger->notice('Cache saved');
             if (++$counter >= $this->maxUpdate && $this->continue) {
                 $finish = false;
                 break;
             }
+            $this->logger->notice('Progress');
             $this->auditCache->progress($output);
         }
         $this->auditCache->progressFinish($output, $counter);
@@ -221,20 +230,6 @@ class AuditCommand extends AbstractCommand
         return $cache;
     }
 
-    private function hashFromResources(HttpResult $result): string
-    {
-        $hashContext = \hash_init('sha1');
-        $handler = $result->getStream();
-        if (0 !== $handler->tell()) {
-            $handler->rewind();
-        }
-        while (!$handler->eof()) {
-            \hash_update($hashContext, $handler->read(1024 * 1024));
-        }
-
-        return \hash_final($hashContext);
-    }
-
     private function treatLinks(AuditResult $auditResult, Rapport $rapport): void
     {
         foreach ($auditResult->getLinks() as $link) {
@@ -247,6 +242,7 @@ class AuditCommand extends AbstractCommand
                 $this->auditCache->addUrl($link);
                 $auditResult->addInternalLink($link);
             } else {
+                $this->logger->notice(\sprintf('Test external link %s', $link->getUrl()));
                 try {
                     $urlReport = $this->cacheManager->testUrl($link);
                     if (!$urlReport->isValid()) {

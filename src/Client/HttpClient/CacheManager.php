@@ -40,9 +40,7 @@ class CacheManager
         $this->client = new Client([
             'handler' => $stack,
             RequestOptions::ALLOW_REDIRECTS => $allowRedirect,
-            RequestOptions::HEADERS => [
-                'User-Agent' => 'elasticms-client/4.2',
-            ],
+            RequestOptions::CONNECT_TIMEOUT => 10,
         ]);
     }
 
@@ -58,7 +56,9 @@ class CacheManager
     public function head(string $url): HttpResult
     {
         try {
-            $head = new HttpResult($this->client->head($url));
+            $head = new HttpResult($this->client->head($url, [
+                RequestOptions::CONNECT_TIMEOUT => 3,
+            ]));
         } catch (ClientException|RequestException $e) {
             $response = $e->getResponse();
             if (null === $response || 405 !== $response->getStatusCode()) {

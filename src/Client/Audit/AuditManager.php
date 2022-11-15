@@ -39,9 +39,10 @@ class AuditManager
         $this->all = $all;
     }
 
-    public function analyze(Url $url, HttpResult $result, string $hash, Rapport $rapport): AuditResult
+    public function analyze(Url $url, HttpResult $result, Rapport $rapport): AuditResult
     {
-        $audit = new AuditResult($url, $hash);
+        $this->logger->notice($url->getUrl());
+        $audit = new AuditResult($url);
         $this->addRequestAudit($audit, $result);
         if (!$result->isValid()) {
             return $audit;
@@ -81,6 +82,8 @@ class AuditManager
 
             return;
         }
+
+        $this->hashFromResources($result, $audit);
         $audit->setStatusCode($result->getResponse()->getStatusCode());
         $audit->setMimetype($result->getMimetype());
 
@@ -92,6 +95,24 @@ class AuditManager
         }
     }
 
+    private function hashFromResources(HttpResult $result, AuditResult $audit): void
+    {
+        $hashContext = \hash_init('sha1');
+        $handler = $result->getStream();
+        $size = 0;
+        if (0 !== $handler->tell()) {
+            $handler->rewind();
+        }
+        while (!$handler->eof()) {
+            $chunk = $handler->read(1024 * 1024);
+            $size += \strlen($chunk);
+            \hash_update($hashContext, $chunk);
+        }
+        $audit->setHash(\hash_final($hashContext));
+        $audit->setSize($size);
+        $this->logger->notice(\sprintf('Size: %d', $size));
+    }
+
     private function startPa11yAudit(AuditResult $audit, HttpResult $result): void
     {
         if (!$result->isHtml()) {
@@ -99,6 +120,7 @@ class AuditManager
 
             return;
         }
+        $this->logger->notice('Start pa11y audit');
 
         try {
             $this->pa11yAudit = new Pa11yWrapper($audit->getUrl()->getUrl());
@@ -116,15 +138,18 @@ class AuditManager
             return;
         }
 
+        $this->logger->notice('Collect pa11y audit');
         try {
             $audit->setPa11y($this->pa11yAudit->getJson());
         } catch (\Throwable $e) {
             $this->logger->warning(\sprintf('Pa11y audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
+        $this->logger->notice('Pa11y audit collected');
     }
 
     private function startLighthouseAudit(AuditResult $audit): void
     {
+        $this->logger->notice('Start Lighthouse audit');
         try {
             $this->lighthouseAudit = new LighthouseWrapper($audit->getUrl()->getUrl());
             $this->lighthouseAudit->start();
@@ -135,6 +160,7 @@ class AuditManager
 
     private function addLighthouseAudit(AuditResult $audit): void
     {
+        $this->logger->notice('Collect Lighthouse audit');
         try {
             $lighthouse = $this->lighthouseAudit->getJson();
             if (isset($lighthouse['audits']['final-screenshot']['details']['data']) && \is_string($lighthouse['audits']['final-screenshot']['details']['data'])) {
@@ -166,10 +192,12 @@ class AuditManager
         } catch (\Throwable $e) {
             $this->logger->critical(\sprintf('Lighthouse audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
+        $this->logger->notice('Lighthouse audit collected');
     }
 
     private function startTikaAudits(AuditResult $audit, HttpResult $result): void
     {
+        $this->logger->notice('Start Tika audit');
         try {
             $stream = $result->getStream();
             $this->tikaLocaleAudit = TikaWrapper::getLocale($stream, $this->cacheManager->getCacheFolder());
@@ -187,6 +215,7 @@ class AuditManager
 
     private function addTikaAudits(AuditResult $audit, HttpResult $result): void
     {
+        $this->logger->notice('Collect Tika audit');
         try {
             $audit->setLocale($this->tikaLocaleAudit->getOutput());
             $audit->setContent($this->tikaTextAudit->getOutput());
@@ -203,6 +232,7 @@ class AuditManager
         } catch (\Throwable $e) {
             $this->logger->critical(\sprintf('Tika audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
+        $this->logger->notice('Tika audit collected');
     }
 
     private function addHtmlAudit(AuditResult $audit, HttpResult $result, Rapport $rapport): void
@@ -213,6 +243,7 @@ class AuditManager
             return;
         }
 
+        $this->logger->notice('Parse HTML');
         try {
             $stream = $result->getResponse()->getBody();
             $stream->rewind();
@@ -233,6 +264,7 @@ class AuditManager
         } catch (\Throwable $e) {
             $this->logger->critical(\sprintf('Crawler audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
+        $this->logger->notice('HTML parsed');
     }
 
     private function getUniqueTextValue(Rapport $rapport, AuditResult $audit, Crawler $crawler, string $selector): ?string

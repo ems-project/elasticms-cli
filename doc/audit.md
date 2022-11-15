@@ -46,6 +46,8 @@ This audit will index in elasticms:
 * If the request returned an error message
 * The status code (i.e. 200)
 * If some security headers are missing
+* The size
+* Compute a hash (in order to detect duplicates)
 
 
 ### The HTML crawler audit

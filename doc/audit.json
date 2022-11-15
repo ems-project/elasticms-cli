@@ -1991,12 +1991,12 @@
                                     "class": "col-md-12",
                                     "lastOfRow": false,
                                     "helptext": null,
-                                    "icon": null,
                                     "prefixIcon": null,
                                     "prefixText": null,
                                     "suffixIcon": null,
                                     "suffixText": null,
-                                    "placeholder": null
+                                    "placeholder": null,
+                                    "icon": null
                                 },
                                 "mappingOptions": {
                                     "index": null,
@@ -2019,6 +2019,31 @@
                                 }
                             },
                             "orderKey": 28,
+                            "parent": null,
+                            "children": []
+                        },
+                        "replaced": []
+                    },
+                    {
+                        "class": "EMS\\CoreBundle\\Entity\\FieldType",
+                        "arguments": [],
+                        "properties": {
+                            "type": "EMS\\CoreBundle\\Form\\DataField\\IntegerFieldType",
+                            "name": "size",
+                            "contentType": null,
+                            "deleted": false,
+                            "description": null,
+                            "options": {
+                                "displayOptions": {
+                                    "label": "Size",
+                                    "class": "col-md-12"
+                                },
+                                "mappingOptions": [],
+                                "restrictionOptions": [],
+                                "extraOptions": [],
+                                "raw_data": []
+                            },
+                            "orderKey": 29,
                             "parent": null,
                             "children": []
                         },
