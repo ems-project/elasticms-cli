@@ -91,4 +91,43 @@ class Functions
 
         return $body;
     }
+
+    /**
+     * @param array<string, string[]> $values,
+     * @param array<string, string[]> $labels
+     */
+    public static function listToJsonMenuNested(array $values, string $fieldName, string $typeName, ?array $labels, ?string $labelField, bool $multiplex = false): string
+    {
+        $data = [];
+        if ($multiplex) {
+            foreach ($values as $key => $fields) {
+                foreach ($fields as $keyField => $field) {
+                    $item = [
+                        'id' => Uuid::uuid4()->toString(),
+                        'type' => $typeName,
+                        'label' => $labels[$key][$keyField] ?? '',
+                        'object' => [$key => [$fieldName => $field]],
+                    ];
+                    if (null !== $labelField) {
+                        $item['object'][$key][$labelField] = $labels[$key][$keyField] ?? '';
+                    }
+                    $data[] = $item;
+                }
+            }
+        } else {
+            foreach ($values as $keyField => $field) {
+                $item = [
+                    'id' => Uuid::uuid4()->toString(),
+                    'type' => $typeName,
+                    'object' => [$fieldName => $field],
+                ];
+                if (null !== $labelField) {
+                    $item['object'][$labelField] = $labels[$keyField] ?? '';
+                }
+                $data[] = $item;
+            }
+        }
+
+        return JSON::encode($data);
+    }
 }
