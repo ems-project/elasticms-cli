@@ -16,7 +16,7 @@ class TikaWrapper extends ProcessWrapper
     {
         $this->tikaJar = \join(DIRECTORY_SEPARATOR, [$cacheFolder, 'tika.jar']);
         $this->trimWhiteSpaces = $trimWhiteSpaces;
-        parent::__construct(['java', '-jar', $this->tikaJar, $option], $stream, $timeout);
+        parent::__construct(['java', '-Djava.awt.headless=true', '-jar', $this->tikaJar, $option], $stream, $timeout);
     }
 
     public static function getLocale(StreamInterface $stream, string $cacheFolder, bool $trimWhiteSpaces = true): TikaWrapper
