@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Client\WebToElasticms\Helper;
 
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
 class Url
 {
     private const ABSOLUTE_SCHEME = ['mailto', 'javascript'];
@@ -19,11 +21,7 @@ class Url
 
     public function __construct(string $url, string $referer = null)
     {
-        $parsed = \parse_url($url);
-        if (false === $parsed) {
-            throw new \RuntimeException(\sprintf('Unexpected wrong url %s', $url));
-        }
-
+        $parsed = self::mb_parse_url($url);
         $relativeParsed = [];
         if (null !== $referer) {
             $relativeParsed = \parse_url($referer);
@@ -173,5 +171,60 @@ class Url
     public function getId(): string
     {
         return \sha1($this->getUrl());
+    }
+
+    /**
+     * @return array{scheme?: string, host?: string, port?: int, user?: string, pass?: string, query?: string, path?: string, fragment?: string}
+     */
+    public static function mb_parse_url(string $url): array
+    {
+        $enc_url = \preg_replace_callback(
+            '%[^:/@?&=#]+%usD',
+            function ($matches) {
+                return \urlencode($matches[0]);
+            },
+            $url
+        );
+
+        if (null === $enc_url) {
+            throw new \RuntimeException(\sprintf('Unexpected wrong url %s', $url));
+        }
+
+        $parts = \parse_url($enc_url);
+
+        if (false === $parts) {
+            throw new \RuntimeException(\sprintf('Unexpected wrong url %s', $url));
+        }
+
+        foreach ($parts as $name => $value) {
+            if (\is_int($value)) {
+                continue;
+            }
+            $parts[$name] = \urldecode($value);
+        }
+
+        $optionsResolver = new OptionsResolver();
+        $optionsResolver->setDefaults([
+            'scheme' => null,
+            'host' => null,
+            'port' => null,
+            'user' => null,
+            'pass' => null,
+            'path' => null,
+            'query' => null,
+            'fragment' => null,
+        ]);
+        $optionsResolver->setAllowedTypes('scheme', ['string', 'null']);
+        $optionsResolver->setAllowedTypes('host', ['string', 'null']);
+        $optionsResolver->setAllowedTypes('port', ['int', 'null']);
+        $optionsResolver->setAllowedTypes('user', ['string', 'null']);
+        $optionsResolver->setAllowedTypes('pass', ['string', 'null']);
+        $optionsResolver->setAllowedTypes('path', ['string', 'null']);
+        $optionsResolver->setAllowedTypes('query', ['string', 'null']);
+        $optionsResolver->setAllowedTypes('fragment', ['string', 'null']);
+
+        $resolved = $optionsResolver->resolve($parts);
+        /* @var array{scheme?: string, host?: string, port?: int, user?: string, pass?: string, query?: string, path?: string, fragment?: string} $resolved */
+        return $resolved;
     }
 }
