@@ -26,7 +26,10 @@ class Rapport
     /** @var string[][] */
     private array $dataLinksInError = [['Path', 'Referrers']];
     /** @var string[][] */
+    private array $assetsInError = [['Path', 'Referrers']];
+    /** @var string[][] */
     private array $updatedDocuments = [['CRUD', 'Content Type', 'OUUID', 'Locale', 'URL']];
+
     private string $filename;
     private SpreadsheetGeneratorService $spreadsheetGeneratorService;
     private CacheManager $cacheManager;
@@ -66,6 +69,10 @@ class Rapport
                     'rows' => \array_values($this->dataLinksInError),
                 ],
                 [
+                    'name' => 'Asset in error',
+                    'rows' => \array_values($this->assetsInError),
+                ],
+                [
                     'name' => 'Updated documents',
                     'rows' => \array_values($this->updatedDocuments),
                 ],
@@ -87,6 +94,11 @@ class Rapport
     public function inDataLinkNotFounds(string $path, string $currentUrl): void
     {
         $this->dataLinksInError[] = [$path, $currentUrl];
+    }
+
+    public function inAssetsError(string $path, ?string $currentUrl): void
+    {
+        $this->assetsInError[] = [$path, $currentUrl ?? 'null'];
     }
 
     public function addUrlNotFound(Url $url): void
