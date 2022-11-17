@@ -7,6 +7,7 @@ namespace App\Client\WebToElasticms\Config;
 use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Client\WebToElasticms\Rapport\Rapport;
+use EMS\CommonBundle\Contracts\CoreApi\CoreApiExceptionInterface;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use EMS\CommonBundle\Helper\EmsFields;
 use Psr\Log\LoggerInterface;
@@ -175,7 +176,7 @@ class ConfigManager
 
         $path = $this->findInDocuments($url);
         if (null === $path) {
-            $path = $this->downloadAsset($url);
+            $path = $this->downloadAsset($url, $rapport);
         }
         if (null === $path) {
             $path = $url->getPath();
@@ -284,7 +285,7 @@ class ConfigManager
     /**
      * @return array{filename: string, filesize: int|null, mimetype: string, sha1: string}|array{}
      */
-    public function urlToAssetArray(Url $url): array
+    public function urlToAssetArray(Url $url, Rapport $rapport): array
     {
         $asset = $this->cacheManager->get($url->getUrl());
         $mimeType = $asset->getMimetype();
@@ -294,8 +295,13 @@ class ConfigManager
         $filename = $url->getFilename();
         $stream = $asset->getStream();
         $stream->seek(0);
-        $hash = $this->coreApi->file()->uploadStream($stream, $filename, $mimeType);
+        try {
+            $hash = $this->coreApi->file()->uploadStream($stream, $filename, $mimeType);
+        } catch (CoreApiExceptionInterface $e) {
+            $rapport->inAssetsError($url->getUrl(), $url->getReferer());
 
+            return [];
+        }
         if (0 === \strlen($hash)) {
             throw new \RuntimeException('Unexpected empty hash');
         }
@@ -308,9 +314,10 @@ class ConfigManager
         ];
     }
 
-    private function downloadAsset(Url $url): ?string
+    private function downloadAsset(Url $url, Rapport $rapport): ?string
     {
-        $assetArray = $this->urlToAssetArray($url);
+        $assetArray = $this->urlToAssetArray($url, $rapport);
+
         if (empty($assetArray)) {
             return null;
         }
