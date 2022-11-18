@@ -83,8 +83,11 @@ class Url
         return $path;
     }
 
-    public function getUrl(bool $withFragment = false): string
+    public function getUrl(string $path = null, bool $withFragment = false): string
     {
+        if (null !== $path) {
+            return (new Url($path, $this->getUrl()))->getUrl(null, $withFragment);
+        }
         if (\in_array($this->getScheme(), self::ABSOLUTE_SCHEME)) {
             $url = \sprintf('%s:', $this->scheme);
         } elseif (null !== $this->user && null !== $this->password) {

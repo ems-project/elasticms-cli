@@ -19,9 +19,9 @@ class UrlTest extends TestCase
         $this->assertEquals('https://user:password@google.com/aaa/toto.txt', (new Url('./toto.txt', 'https://user:password@google.com/aaa/'))->getUrl());
         $this->assertEquals('https://user:password@google.com/toto.txt', (new Url('./toto.txt', 'https://user:password@google.com/aaa'))->getUrl());
         $this->assertEquals('https://user:password@google.com/aaa/toto.txt', (new Url('./toto.txt', 'https://user:password@google.com/aaa/'))->getUrl());
-        $this->assertEquals('https://user:password@google.com/aaa/toto.txt#anchor', (new Url('./toto.txt#anchor', 'https://user:password@google.com/aaa/'))->getUrl(true));
+        $this->assertEquals('https://user:password@google.com/aaa/toto.txt#anchor', (new Url('./toto.txt#anchor', 'https://user:password@google.com/aaa/'))->getUrl(null, true));
         $this->assertEquals('https://user:password@google.com/aaa/toto.txt?anchor=toto&foo=bar', (new Url('./toto.txt?anchor=toto&foo=bar', 'https://user:password@google.com/aaa/'))->getUrl());
-        $this->assertEquals('https://user:password@google.com/aaa/toto.txt#anchor?anchor=toto&foo=bar', (new Url('./toto.txt#anchor?anchor=toto&foo=bar', 'https://user:password@google.com/aaa/'))->getUrl(true));
+        $this->assertEquals('https://user:password@google.com/aaa/toto.txt#anchor?anchor=toto&foo=bar', (new Url('./toto.txt#anchor?anchor=toto&foo=bar', 'https://user:password@google.com/aaa/'))->getUrl(null, true));
         $this->assertEquals('https://user:password@google.com/aaa/toto.txt', (new Url('./toto.txt', 'https://user:password@google.com/aaa/#anchor?anchor=toto&foo=bar'))->getUrl());
         $this->assertEquals('https://www.socialsecurity.be/site_nl/general/cookies.htm', (new Url('../../../general/cookies.htm', 'https://www.socialsecurity.be/site_nl/civilservant/Infos/general/index.htm'))->getUrl());
     }
