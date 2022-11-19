@@ -88,7 +88,7 @@ class CacheManager
             return new UrlReport($url, 0, 'Not crawlable URL');
         }
         try {
-            $result = $this->get($url->getUrl());
+            $result = $this->head($url->getUrl());
             $report = new UrlReport($url, $result->getResponse()->getStatusCode());
         } catch (ClientException|RequestException $e) {
             $response = $e->getResponse();
