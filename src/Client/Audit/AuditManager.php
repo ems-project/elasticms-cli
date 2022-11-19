@@ -49,7 +49,7 @@ class AuditManager
         $this->tikaClient = new TikaClient();
     }
 
-    public function analyze(Url $url, HttpResult $result, Rapport $rapport): AuditResult
+    public function analyze(Url $url, HttpResult $result, Report $report): AuditResult
     {
         $this->logger->notice($url->getUrl());
         $audit = new AuditResult($url);
@@ -57,7 +57,7 @@ class AuditManager
         if (!$result->isValid()) {
             return $audit;
         }
-        $this->addHtmlAudit($audit, $result, $rapport);
+        $this->addHtmlAudit($audit, $result, $report);
         if ($result->isHtml() && ($this->all || $this->pa11y)) {
             $this->startPa11yAudit($audit, $result);
         }
@@ -252,7 +252,7 @@ class AuditManager
         $this->logger->notice('Tika audit collected');
     }
 
-    private function addHtmlAudit(AuditResult $audit, HttpResult $result, Rapport $rapport): void
+    private function addHtmlAudit(AuditResult $audit, HttpResult $result, Report $report): void
     {
         if (!$result->isHtml()) {
             $this->logger->notice(\sprintf('Mimetype %s not supported by the Html Audit', $result->getMimetype()));
@@ -274,43 +274,43 @@ class AuditManager
                 }
                 $audit->addLinks(new Url($href, $audit->getUrl()->getUrl()));
             }
-            $audit->setMetaTitle($this->getUniqueTextValue($rapport, $audit, $crawler, 'title'));
-            $audit->setTitle($this->getUniqueTextValue($rapport, $audit, $crawler, 'h1'));
-            $audit->setCanonical($this->getUniqueTextAttr($rapport, $audit, $crawler, 'link[rel="canonical"]', 'href'));
-            $audit->setAuthor($this->getUniqueTextAttr($rapport, $audit, $crawler, 'meta[name="author"]', 'content', false));
+            $audit->setMetaTitle($this->getUniqueTextValue($report, $audit, $crawler, 'title'));
+            $audit->setTitle($this->getUniqueTextValue($report, $audit, $crawler, 'h1'));
+            $audit->setCanonical($this->getUniqueTextAttr($report, $audit, $crawler, 'link[rel="canonical"]', 'href'));
+            $audit->setAuthor($this->getUniqueTextAttr($report, $audit, $crawler, 'meta[name="author"]', 'content', false));
         } catch (\Throwable $e) {
             $this->logger->critical(\sprintf('Crawler audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
         }
         $this->logger->notice('HTML parsed');
     }
 
-    private function getUniqueTextValue(Rapport $rapport, AuditResult $audit, Crawler $crawler, string $selector): ?string
+    private function getUniqueTextValue(Report $report, AuditResult $audit, Crawler $crawler, string $selector): ?string
     {
         $tag = $crawler->filter($selector);
         if (0 === $tag->count() || 0 === \strlen(\trim($tag->eq(0)->text()))) {
-            $rapport->addWarning($audit->getUrl(), [\sprintf('%s is missing', $selector)]);
+            $report->addWarning($audit->getUrl(), [\sprintf('%s is missing', $selector)]);
 
             return null;
         }
         if ($tag->count() > 1) {
-            $rapport->addWarning($audit->getUrl(), [\sprintf('%s is present %d times', $selector, $tag->count())]);
+            $report->addWarning($audit->getUrl(), [\sprintf('%s is present %d times', $selector, $tag->count())]);
         }
 
         return \trim($tag->eq(0)->text());
     }
 
-    private function getUniqueTextAttr(Rapport $rapport, AuditResult $audit, Crawler $crawler, string $selector, string $attr, bool $withWarnings = true): ?string
+    private function getUniqueTextAttr(Report $report, AuditResult $audit, Crawler $crawler, string $selector, string $attr, bool $withWarnings = true): ?string
     {
         $tag = $crawler->filter($selector);
         if (0 === $tag->count() || 0 === \strlen(\trim($tag->eq(0)->attr($attr) ?? ''))) {
             if ($withWarnings) {
-                $rapport->addWarning($audit->getUrl(), [\sprintf('%s is missing', $selector)]);
+                $report->addWarning($audit->getUrl(), [\sprintf('%s is missing', $selector)]);
             }
 
             return null;
         }
         if ($tag->count() > 1) {
-            $rapport->addWarning($audit->getUrl(), [\sprintf('%s is present %d times', $selector, $tag->count())]);
+            $report->addWarning($audit->getUrl(), [\sprintf('%s is present %d times', $selector, $tag->count())]);
         }
 
         return \trim($tag->eq(0)->attr($attr) ?? '');

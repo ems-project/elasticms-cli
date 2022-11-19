@@ -29,7 +29,7 @@ class Cache
     private ?string $status = null;
     private \DateTimeImmutable $startedDatetime;
     private int $startedAt;
-    private Rapport $rapport;
+    private Report $report;
 
     public function __construct(?Url $baseUrl = null, ?LoggerInterface $logger = null)
     {
@@ -43,7 +43,7 @@ class Cache
         }
         $this->startedDatetime = new \DateTimeImmutable();
         $this->startedAt = 0;
-        $this->rapport = new Rapport();
+        $this->report = new Report();
     }
 
     public function serialize(string $format = JsonEncoder::FORMAT): string
@@ -192,7 +192,7 @@ class Cache
 
     public function reset(): void
     {
-        $this->rapport = new Rapport();
+        $this->report = new Report();
         $this->lastUpdated = null;
     }
 
@@ -232,13 +232,13 @@ class Cache
         $this->hosts = $hosts;
     }
 
-    public function setRapport(Rapport $rapport): void
+    public function setReport(Report $report): void
     {
-        $this->rapport = $rapport;
+        $this->report = $report;
     }
 
-    public function getRapport(): Rapport
+    public function getReport(): Report
     {
-        return $this->rapport;
+        return $this->report;
     }
 }

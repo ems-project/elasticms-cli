@@ -10,7 +10,7 @@ use EMS\CommonBundle\Common\SpreadsheetGeneratorService;
 use EMS\CommonBundle\Contracts\SpreadsheetGeneratorServiceInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 
-class Rapport
+class Report
 {
     /** @var string[][] */
     private array $accessibilityErrors = [['URL', 'WCAG2AA', 'Accessibility\'s score']];
@@ -31,11 +31,11 @@ class Rapport
 
     public function save(string $folder): void
     {
-        $filename = $folder.DIRECTORY_SEPARATOR.\sprintf('Audit-Rapport-%s.xlsx', \date('Ymd-His'));
+        $filename = $folder.DIRECTORY_SEPARATOR.\sprintf('Audit-Report-%s.xlsx', \date('Ymd-His'));
         $config = [
             SpreadsheetGeneratorServiceInterface::CONTENT_DISPOSITION => HeaderUtils::DISPOSITION_ATTACHMENT,
             SpreadsheetGeneratorServiceInterface::WRITER => SpreadsheetGeneratorServiceInterface::XLSX_WRITER,
-            SpreadsheetGeneratorServiceInterface::CONTENT_FILENAME => 'Audit-Rapport.xlsx',
+            SpreadsheetGeneratorServiceInterface::CONTENT_FILENAME => 'Audit-Report.xlsx',
             SpreadsheetGeneratorServiceInterface::SHEETS => [
                 [
                     'name' => 'Broken links',
