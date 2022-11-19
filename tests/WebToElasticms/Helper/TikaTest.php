@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\WebToElasticms\Helper;
 
+use App\Helper\HtmlHelper;
 use App\Helper\TikaWrapper;
 use GuzzleHttp\Psr7\BufferStream;
 use GuzzleHttp\Psr7\Stream;
@@ -29,14 +30,14 @@ class TikaTest extends TestCase
         $json = TikaWrapper::getJsonMetadata($bonjourDocx, \sys_get_temp_dir())->getJson();
         $this->assertEquals('Mathieu De Keyzer', $json['dc:creator'] ?? null);
         $this->assertEquals('Texte de test tika', $json['dc:title'] ?? null);
-        $this->assertEquals(['https://www.google.com/'], TikaWrapper::getHtml($bonjourDocx, \sys_get_temp_dir())->getLinks());
+        $this->assertEquals(['https://www.google.com/'], (new HtmlHelper(TikaWrapper::getHtml($bonjourDocx, \sys_get_temp_dir())->getOutput()))->getLinks());
     }
 
     public function testPdfFile(): void
     {
-        $bonjourDocx = new Stream(\fopen(\join(DIRECTORY_SEPARATOR, [__DIR__, 'resources', 'Bonjour.pdf']), 'r'));
-        $this->assertEquals('fr', TikaWrapper::getLocale($bonjourDocx, \sys_get_temp_dir())->getOutput());
-        $this->assertEquals('Bonjour, comment allez-vous ? Voici un lien vers google. Bonne journée. https://www.google.com/', TikaWrapper::getText($bonjourDocx, \sys_get_temp_dir())->getOutput());
-        $this->assertEquals(['https://www.google.com/'], TikaWrapper::getHtml($bonjourDocx, \sys_get_temp_dir())->getLinks());
+        $bonjourPdf = new Stream(\fopen(\join(DIRECTORY_SEPARATOR, [__DIR__, 'resources', 'Bonjour.pdf']), 'r'));
+        $this->assertEquals('fr', TikaWrapper::getLocale($bonjourPdf, \sys_get_temp_dir())->getOutput());
+        $this->assertEquals('Bonjour, comment allez-vous ? Voici un lien vers google. Bonne journée. https://www.google.com/', TikaWrapper::getText($bonjourPdf, \sys_get_temp_dir())->getOutput());
+        $this->assertEquals(['https://www.google.com/'], (new HtmlHelper(TikaWrapper::getHtml($bonjourPdf, \sys_get_temp_dir())->getOutput()))->getLinks());
     }
 }
