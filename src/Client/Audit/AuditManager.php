@@ -179,7 +179,7 @@ class AuditManager
         $this->logger->notice('Collect Lighthouse audit');
         try {
             $lighthouse = $this->lighthouseAudit->getJson();
-            if (isset($lighthouse['audits']['final-screenshot']['details']['data']) && \is_string($lighthouse['audits']['final-screenshot']['details']['data'])) {
+            if (\is_string($lighthouse['audits']['final-screenshot']['details']['data'] ?? null)) {
                 $audit->setLighthouseScreenshot($lighthouse['audits']['final-screenshot']['details']['data']);
             }
             if (\is_array($lighthouse['runWarnings'] ?? null)) {
@@ -187,16 +187,16 @@ class AuditManager
                     $audit->addWarning(\strval($warning));
                 }
             }
-            if (\is_float($lighthouse['categories']['performance']['score'])) {
+            if (\is_float($lighthouse['categories']['performance']['score'] ?? null)) {
                 $audit->setPerformance($lighthouse['categories']['performance']['score']);
             }
-            if (\is_float($lighthouse['categories']['accessibility']['score'])) {
+            if (\is_float($lighthouse['categories']['accessibility']['score'] ?? null)) {
                 $audit->setAccessibility($lighthouse['categories']['accessibility']['score']);
             }
-            if (\is_float($lighthouse['categories']['best-practices']['score'])) {
+            if (\is_float($lighthouse['categories']['best-practices']['score'] ?? null)) {
                 $audit->setBestPractices($lighthouse['categories']['best-practices']['score']);
             }
-            if (\is_float($lighthouse['categories']['seo']['score'])) {
+            if (\is_float($lighthouse['categories']['seo']['score'] ?? null)) {
                 $audit->setSeo($lighthouse['categories']['seo']['score']);
             }
             unset($lighthouse['i18n']);
