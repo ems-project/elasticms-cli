@@ -7,9 +7,12 @@ namespace App\Client\Audit;
 use App\Client\HttpClient\CacheManager;
 use App\Client\HttpClient\HttpResult;
 use App\Client\WebToElasticms\Helper\Url;
+use App\Helper\AsyncResponse;
 use App\Helper\HtmlHelper;
 use App\Helper\LighthouseWrapper;
 use App\Helper\Pa11yWrapper;
+use App\Helper\TikaClient;
+use App\Helper\TikaMetaResponse;
 use App\Helper\TikaWrapper;
 use EMS\CommonBundle\Common\Standard\Json;
 use Psr\Log\LoggerInterface;
@@ -21,6 +24,7 @@ class AuditManager
     private bool $lighthouse;
     private bool $pa11y;
     private bool $tika;
+    private bool $tikaJar;
     private CacheManager $cacheManager;
     private bool $all;
     private Pa11yWrapper $pa11yAudit;
@@ -29,15 +33,20 @@ class AuditManager
     private TikaWrapper $tikaTextAudit;
     private TikaWrapper $tikaLinksAudit;
     private TikaWrapper $tikaMetaAudit;
+    private TikaClient $tikaClient;
+    private TikaMetaResponse $metaRequest;
+    private AsyncResponse $htmlRequest;
 
-    public function __construct(CacheManager $cacheManager, LoggerInterface $logger, bool $all, bool $pa11y, bool $lighthouse, bool $tika)
+    public function __construct(CacheManager $cacheManager, LoggerInterface $logger, bool $all, bool $pa11y, bool $lighthouse, bool $tika, bool $tikaJar = false)
     {
         $this->cacheManager = $cacheManager;
         $this->logger = $logger;
         $this->pa11y = $pa11y;
         $this->lighthouse = $lighthouse;
+        $this->tikaJar = $tikaJar;
         $this->tika = $tika;
         $this->all = $all;
+        $this->tikaClient = new TikaClient();
     }
 
     public function analyze(Url $url, HttpResult $result, Rapport $rapport): AuditResult
@@ -58,6 +67,9 @@ class AuditManager
         if ($this->all || $this->tika) {
             $this->startTikaAudits($audit, $result);
         }
+        if ($this->tikaJar) {
+            $this->startTikaJarAudits($audit, $result);
+        }
 
         if ($result->isHtml() && ($this->all || $this->pa11y)) {
             $this->addPa11yAudit($audit, $result);
@@ -67,6 +79,9 @@ class AuditManager
         }
         if ($this->all || $this->tika) {
             $this->addTikaAudits($audit, $result);
+        }
+        if ($this->tikaJar) {
+            $this->addTikaJarAudits($audit, $result);
         }
 
         return $audit;
@@ -196,9 +211,9 @@ class AuditManager
         $this->logger->notice('Lighthouse audit collected');
     }
 
-    private function startTikaAudits(AuditResult $audit, HttpResult $result): void
+    private function startTikaJarAudits(AuditResult $audit, HttpResult $result): void
     {
-        $this->logger->notice('Start Tika audit');
+        $this->logger->notice('Start Tika Jar audit');
         try {
             $stream = $result->getStream();
             $this->tikaLocaleAudit = TikaWrapper::getLocale($stream, $this->cacheManager->getCacheFolder());
@@ -214,9 +229,9 @@ class AuditManager
         }
     }
 
-    private function addTikaAudits(AuditResult $audit, HttpResult $result): void
+    private function addTikaJarAudits(AuditResult $audit, HttpResult $result): void
     {
-        $this->logger->notice('Collect Tika audit');
+        $this->logger->notice('Collect Tika Jar audit');
         try {
             $audit->setLocale($this->tikaLocaleAudit->getOutput());
             $audit->setContent($this->tikaTextAudit->getOutput());
@@ -299,5 +314,33 @@ class AuditManager
         }
 
         return \trim($tag->eq(0)->attr($attr) ?? '');
+    }
+
+    private function startTikaAudits(AuditResult $audit, HttpResult $result)
+    {
+        $this->metaRequest = $this->tikaClient->meta($result->getStream());
+        $this->htmlRequest = $this->tikaClient->html($result->getStream());
+    }
+
+    private function addTikaAudits(AuditResult $audit, HttpResult $result)
+    {
+        $this->logger->notice('Collect Tika audit');
+        try {
+            $html = new HtmlHelper($this->htmlRequest->getContent());
+            $audit->setLocale($this->metaRequest->getLocale());
+            $audit->setContent($html->getText());
+            $audit->setTikaDatetime();
+            if ($result->isHtml()) {
+                return;
+            }
+            foreach ($html->getLinks() as $link) {
+                $audit->addLinks(new Url($link, $audit->getUrl()->getUrl()));
+            }
+            $audit->setTitle($this->metaRequest->getTitle());
+            $audit->setAuthor($this->metaRequest->getCreator());
+        } catch (\Throwable $e) {
+            $this->logger->critical(\sprintf('Tika audit for %s failed: %s', $audit->getUrl()->getUrl(), $e->getMessage()));
+        }
+        $this->logger->notice('Tika audit collected');
     }
 }
