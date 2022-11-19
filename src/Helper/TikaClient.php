@@ -8,11 +8,11 @@ use Psr\Http\Message\StreamInterface;
 
 class TikaClient
 {
-    public const BUFFER_SIZE = 1024 * 1024;
+    public const TIKA_BASE_URL = 'http://localhost:9998/';
     private Url $serverUrl;
     private ?Client $client = null;
 
-    public function __construct(string $serverBaseUrl = 'http://localhost:9998/')
+    public function __construct(string $serverBaseUrl = self::TIKA_BASE_URL)
     {
         $this->serverUrl = new Url($serverBaseUrl);
     }

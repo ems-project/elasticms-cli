@@ -37,7 +37,7 @@ class AuditManager
     private TikaMetaResponse $metaRequest;
     private AsyncResponse $htmlRequest;
 
-    public function __construct(CacheManager $cacheManager, LoggerInterface $logger, bool $all, bool $pa11y, bool $lighthouse, bool $tika, bool $tikaJar = false)
+    public function __construct(CacheManager $cacheManager, LoggerInterface $logger, bool $all, bool $pa11y, bool $lighthouse, bool $tika, bool $tikaJar, string $tikaServerUrl)
     {
         $this->cacheManager = $cacheManager;
         $this->logger = $logger;
@@ -46,7 +46,7 @@ class AuditManager
         $this->tikaJar = $tikaJar;
         $this->tika = $tika;
         $this->all = $all;
-        $this->tikaClient = new TikaClient();
+        $this->tikaClient = new TikaClient($tikaServerUrl);
     }
 
     public function analyze(Url $url, HttpResult $result, Report $report): AuditResult
@@ -64,7 +64,10 @@ class AuditManager
         if ($result->isHtml() && ($this->all || $this->lighthouse)) {
             $this->startLighthouseAudit($audit);
         }
-        if ($this->all || $this->tika) {
+        if ($this->tikaJar && $this->tika) {
+            throw new \RuntimeException('--tika and --tika-jar can not be activated at the same time');
+        }
+        if (($this->all && !$this->tikaJar) || $this->tika) {
             $this->startTikaAudits($result);
         }
         if ($this->tikaJar) {
