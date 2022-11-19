@@ -65,7 +65,7 @@ class AuditManager
             $this->startLighthouseAudit($audit);
         }
         if ($this->all || $this->tika) {
-            $this->startTikaAudits($audit, $result);
+            $this->startTikaAudits($result);
         }
         if ($this->tikaJar) {
             $this->startTikaJarAudits($audit, $result);
@@ -316,13 +316,13 @@ class AuditManager
         return \trim($tag->eq(0)->attr($attr) ?? '');
     }
 
-    private function startTikaAudits(AuditResult $audit, HttpResult $result)
+    private function startTikaAudits(HttpResult $result): void
     {
         $this->metaRequest = $this->tikaClient->meta($result->getStream());
         $this->htmlRequest = $this->tikaClient->html($result->getStream());
     }
 
-    private function addTikaAudits(AuditResult $audit, HttpResult $result)
+    private function addTikaAudits(AuditResult $audit, HttpResult $result): void
     {
         $this->logger->notice('Collect Tika audit');
         try {

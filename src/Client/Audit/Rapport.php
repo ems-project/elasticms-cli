@@ -22,7 +22,6 @@ class Rapport
     private array $ignoredLinks = [['Referer', 'URL', 'Error message']];
     /** @var string[][] */
     private array $warnings = [['Referer', 'URL', 'Warning message']];
-    private string $filename;
     private SpreadsheetGeneratorService $spreadsheetGeneratorService;
 
     public function __construct()
@@ -30,13 +29,9 @@ class Rapport
         $this->spreadsheetGeneratorService = new SpreadsheetGeneratorService();
     }
 
-    public function setFolder(string $folder): void
+    public function save(string $folder): void
     {
-        $this->filename = $folder.DIRECTORY_SEPARATOR.\sprintf('Audit-Rapport-%s.xlsx', \date('Ymd-His'));
-    }
-
-    public function save(): void
-    {
+        $filename = $folder.DIRECTORY_SEPARATOR.\sprintf('Audit-Rapport-%s.xlsx', \date('Ymd-His'));
         $config = [
             SpreadsheetGeneratorServiceInterface::CONTENT_DISPOSITION => HeaderUtils::DISPOSITION_ATTACHMENT,
             SpreadsheetGeneratorServiceInterface::WRITER => SpreadsheetGeneratorServiceInterface::XLSX_WRITER,
@@ -64,7 +59,7 @@ class Rapport
                 ],
             ],
         ];
-        $this->spreadsheetGeneratorService->generateSpreadsheetFile($config, $this->filename);
+        $this->spreadsheetGeneratorService->generateSpreadsheetFile($config, $filename);
     }
 
     public function addAccessibilityError(string $url, int $errorCount, ?float $score): void

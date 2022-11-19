@@ -117,16 +117,14 @@ class AuditCommand extends AbstractCommand
 
         $this->io->section('Load config');
         $this->cacheManager = new CacheManager($this->cacheFolder, false);
-        $this->auditCache = $this->loadAuditCache();
         $api = $this->adminHelper->getCoreApi()->data($this->contentType);
 
+        $this->auditCache = $this->loadAuditCache();
         $rapport = $this->auditCache->getRapport();
         if (null === $rapport || !$this->continue) {
             $rapport = new Rapport();
         }
-        $rapport->setFolder($this->rapportsFolder);
         $auditManager = new AuditManager($this->cacheManager, $this->logger, $this->all, $this->pa11y, $this->lighthouse, $this->tika);
-
         if ($this->continue) {
             $this->auditCache->reset();
         }
@@ -210,7 +208,7 @@ class AuditCommand extends AbstractCommand
         $this->io->section('Save cache and rapport');
         $this->auditCache->setRapport($this->auditCache->hasNext() ? $rapport : null);
         $this->auditCache->save($this->jsonPath, $finish);
-        $rapport->save();
+        $rapport->save($this->rapportsFolder);
 
         return self::EXECUTE_SUCCESS;
     }

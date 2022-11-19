@@ -190,7 +190,7 @@ class AuditResult
         $this->mimetype = $mimetype;
     }
 
-    public function setLocale(string $locale): void
+    public function setLocale(?string $locale): void
     {
         $this->locale = $locale;
     }
