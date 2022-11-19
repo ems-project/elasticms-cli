@@ -154,7 +154,7 @@ class AuditCommand extends AbstractCommand
                 if (null === $location) {
                     throw new \RuntimeException('Unexpected missing Location');
                 }
-                $link = new Url($location, $url->getPath());
+                $link = new Url($location, $url->getUrl());
                 if ($this->auditCache->inHosts($link->getHost())) {
                     $this->auditCache->addUrl($link);
                     $report->addWarning($url, [\sprintf('Redirect (%d) to %s', $result->getResponse()->getStatusCode(), $location)]);

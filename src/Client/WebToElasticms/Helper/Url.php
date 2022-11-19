@@ -34,15 +34,12 @@ class Url
         $parsed = self::mb_parse_url($url);
         $relativeParsed = [];
         if (null !== $referer) {
-            $relativeParsed = \parse_url($referer);
-        }
-        if (false === $relativeParsed) {
-            throw new \RuntimeException(\sprintf('Unexpected wrong url %s', $referer));
+            $relativeParsed = self::mb_parse_url($referer);
         }
 
         $scheme = $parsed['scheme'] ?? $relativeParsed['scheme'] ?? null;
         if (null === $scheme) {
-            throw new \RuntimeException('Unexpected null scheme');
+            throw new \RuntimeException(\sprintf('Unexpected null scheme: %s with referer: %s', $url, $referer));
         }
         $this->scheme = $scheme;
 
