@@ -8,7 +8,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class Url
 {
-    private const ABSOLUTE_SCHEME = ['mailto', 'javascript'];
+    private const ABSOLUTE_SCHEME = ['mailto', 'javascript', 'tel'];
     private string $scheme;
     private string $host;
     private ?int $port;
