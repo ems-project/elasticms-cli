@@ -5,6 +5,16 @@ declare(strict_types=1);
 namespace App\Client\WebToElasticms\Helper;
 
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
+use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
+use Symfony\Component\Serializer\Encoder\JsonEncode;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Encoder\XmlEncoder;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
 
 class Url
 {
@@ -42,7 +52,7 @@ class Url
         }
         $this->host = $host;
 
-        $this->referer = $referer;
+        $this->referer = null === $referer ? null : (new Url($referer))->getUrl(null, true);
         $this->user = $parsed['user'] ?? $relativeParsed['user'] ?? null;
         $this->password = $parsed['pass'] ?? $relativeParsed['pass'] ?? null;
         $this->port = $parsed['port'] ?? $relativeParsed['port'] ?? null;
@@ -50,6 +60,48 @@ class Url
         $this->fragment = $parsed['fragment'] ?? null;
 
         $this->path = $this->getAbsolutePath($parsed['path'] ?? '/', $relativeParsed['path'] ?? '/');
+    }
+
+    public function serialize(string $format = JsonEncoder::FORMAT): string
+    {
+        return self::getSerializer()->serialize($this, $format, [AbstractNormalizer::IGNORED_ATTRIBUTES => [
+            'query',
+            'scheme',
+            'host',
+            'port',
+            'user',
+            'password',
+            'path',
+            'fragment',
+            'filename',
+            'crawlable',
+            'id',
+        ]]);
+    }
+
+    public static function deserialize(string $data, string $format = JsonEncoder::FORMAT): Url
+    {
+        $url = self::getSerializer()->deserialize($data, Url::class, $format);
+        if (!$url instanceof Url) {
+            throw new \RuntimeException('Unexpected non Cache object');
+        }
+
+        return $url;
+    }
+
+    private static function getSerializer(): Serializer
+    {
+        $reflectionExtractor = new ReflectionExtractor();
+        $phpDocExtractor = new PhpDocExtractor();
+        $propertyTypeExtractor = new PropertyInfoExtractor([$reflectionExtractor], [$phpDocExtractor, $reflectionExtractor], [$phpDocExtractor], [$reflectionExtractor], [$reflectionExtractor]);
+
+        return new Serializer([
+            new ArrayDenormalizer(),
+            new ObjectNormalizer(null, null, null, $propertyTypeExtractor),
+        ], [
+            new XmlEncoder(),
+            new JsonEncoder(new JsonEncode([JsonEncode::OPTIONS => JSON_UNESCAPED_SLASHES]), null),
+        ]);
     }
 
     private function getAbsolutePath(string $path, string $relativeToPath): string
