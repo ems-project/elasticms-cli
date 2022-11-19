@@ -17,11 +17,11 @@ class Report
     /** @var string[][] */
     private array $securityErrors = [['URL', 'Missing headers', 'Best practice\'s score']];
     /** @var string[][] */
-    private array $brokenLinks = [['Referer', 'URL', 'Status Code', 'Error message']];
+    private array $brokenLinks = [['URL', 'Status Code', 'Error message', 'Referers']];
     /** @var string[][] */
-    private array $ignoredLinks = [['Referer', 'URL', 'Error message']];
+    private array $ignoredLinks = [['URL', 'Error message', 'Referrers']];
     /** @var string[][] */
-    private array $warnings = [['Referer', 'URL', 'Warning message']];
+    private array $warnings = [['URL', 'Warning message', 'Referrer']];
     private SpreadsheetGeneratorService $spreadsheetGeneratorService;
 
     public function __construct()
@@ -74,7 +74,23 @@ class Report
 
     public function addBrokenLink(UrlReport $urlReport): void
     {
-        $this->brokenLinks[] = [$urlReport->getUrl()->getReferer() ?? '', $urlReport->getUrl()->getUrl(), \strval($urlReport->getStatusCode()), $urlReport->getMessage() ?? ''];
+        $hash = \sha1(\implode(':', [
+            $urlReport->getUrl()->getUrl(),
+            \strval($urlReport->getStatusCode()),
+            $urlReport->getMessage() ?? '',
+        ]));
+        if (!isset($this->brokenLinks[$hash])) {
+            $this->brokenLinks[$hash] = [
+                'url' => $urlReport->getUrl()->getUrl(),
+                'status_code' => \strval($urlReport->getStatusCode()),
+                'message' => $urlReport->getMessage() ?? '',
+                'referrers' => $urlReport->getUrl()->getReferer() ?? '',
+            ];
+        } elseif (\strlen($this->brokenLinks[$hash]['referrers']) > 1000) {
+            $this->brokenLinks[$hash]['referrers'] .= '.';
+        } else {
+            $this->brokenLinks[$hash]['referrers'] .= ','.$urlReport->getUrl()->getReferer() ?? '';
+        }
     }
 
     /**
@@ -83,7 +99,7 @@ class Report
     public function addWarning(Url $url, array $warnings): void
     {
         foreach ($warnings as $warning) {
-            $this->warnings[] = [$url->getReferer() ?? '', $url->getUrl(), $warning];
+            $this->warnings[] = [$url->getUrl(), $warning, $url->getReferer() ?? ''];
         }
     }
 
@@ -153,7 +169,21 @@ class Report
 
     public function addIgnoredUrl(Url $url, string $message): void
     {
-        $this->ignoredLinks[] = [$url->getReferer() ?? '', $url->getUrl(), $message];
+        $hash = \sha1(\implode(':', [
+            $url->getUrl(),
+            $message,
+        ]));
+        if (!isset($this->ignoredLinks[$hash])) {
+            $this->ignoredLinks[$hash] = [
+                'url' => $url->getUrl(),
+                'message' => $message ?? '',
+                'referrers' => $url->getReferer() ?? '',
+            ];
+        } elseif (\strlen($this->ignoredLinks[$hash]['referrers']) > 1000) {
+            $this->ignoredLinks[$hash]['referrers'] .= '.';
+        } else {
+            $this->ignoredLinks[$hash]['referrers'] .= ','.$url->getReferer() ?? '';
+        }
     }
 
     /**
