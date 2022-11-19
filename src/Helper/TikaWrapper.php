@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Helper;
 
 use Psr\Http\Message\StreamInterface;
-use Symfony\Component\DomCrawler\Crawler;
 
 class TikaWrapper extends ProcessWrapper
 {
@@ -57,7 +56,7 @@ class TikaWrapper extends ProcessWrapper
     public function getOutput(): string
     {
         if ($this->trimWhiteSpaces) {
-            return \trim(\preg_replace('!\s+!', ' ', parent::getOutput()) ?? '');
+            return TextHelper::trim(parent::getOutput());
         }
 
         return parent::getOutput();
@@ -69,26 +68,5 @@ class TikaWrapper extends ProcessWrapper
             return;
         }
         \file_put_contents($this->tikaJar, \fopen('https://dlcdn.apache.org/tika/2.6.0/tika-app-2.6.0.jar', 'rb'));
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getLinks(): array
-    {
-        $html = $this->getOutput();
-        $crawler = new Crawler($html);
-        $content = $crawler->filter('a');
-        $externalLinks = [];
-        for ($i = 0; $i < $content->count(); ++$i) {
-            $item = $content->eq($i);
-            $href = $item->attr('href');
-            if (null === $href || 0 === \strlen($href) || '#' === \substr($href, 0, 1)) {
-                continue;
-            }
-            $externalLinks[] = $href;
-        }
-
-        return $externalLinks;
     }
 }

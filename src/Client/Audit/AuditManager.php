@@ -7,6 +7,7 @@ namespace App\Client\Audit;
 use App\Client\HttpClient\CacheManager;
 use App\Client\HttpClient\HttpResult;
 use App\Client\WebToElasticms\Helper\Url;
+use App\Helper\HtmlHelper;
 use App\Helper\LighthouseWrapper;
 use App\Helper\Pa11yWrapper;
 use App\Helper\TikaWrapper;
@@ -223,7 +224,8 @@ class AuditManager
             if ($result->isHtml()) {
                 return;
             }
-            foreach ($this->tikaLinksAudit->getLinks() as $link) {
+            $html = new HtmlHelper($this->tikaLinksAudit->getOutput());
+            foreach ($html->getLinks() as $link) {
                 $audit->addLinks(new Url($link, $audit->getUrl()->getUrl()));
             }
             $meta = $this->tikaMetaAudit->getJson();
