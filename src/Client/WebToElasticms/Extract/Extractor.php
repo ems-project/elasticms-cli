@@ -7,6 +7,7 @@ namespace App\Client\WebToElasticms\Extract;
 use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Config\Computer;
 use App\Client\WebToElasticms\Config\ConfigManager;
+use App\Client\WebToElasticms\Config\Document as WebDocument;
 use App\Client\WebToElasticms\Config\WebResource;
 use App\Client\WebToElasticms\Helper\ExpressionData;
 use App\Client\WebToElasticms\Helper\Url;
@@ -76,11 +77,11 @@ class Extractor
             $defaultData = $document->getDefaultData();
             $data = $defaultData;
             $withoutError = true;
-            $NoEmptyExtractor = true;
+            $emptyExtractor = false;
             foreach ($document->getResources() as $resource) {
                 $this->logger->notice(\sprintf('Start extracting from %s', $resource->getUrl()));
                 if (EmptyExtractor::TYPE === $this->config->getAnalyzer($resource->getType())->getType()) {
-                    $NoEmptyExtractor = false;
+                    $emptyExtractor = true;
                 } else {
                     try {
                         $this->extractDataFromResource($document, $resource, $data);
@@ -94,19 +95,23 @@ class Extractor
                 }
             }
 
-            if ($withoutError && $data === $defaultData && $NoEmptyExtractor) {
+            if ($withoutError && $data === $defaultData && !$emptyExtractor) {
                 $rapport->addNothingExtracted($document);
                 continue;
             }
 
-            $hash = \sha1(Json::encode($data));
+            if ($emptyExtractor) {
+                $hash = $this->hashFromResources($document);
+            } else {
+                $hash = \sha1(Json::encode($data));
+            }
 
             $type = $this->config->getType($document->getType());
             foreach ($type->getComputers() as $computer) {
                 if (!$this->condition($computer, $data)) {
                     continue;
                 }
-                $value = $this->compute($computer, $data);
+                $value = $this->compute($computer, $data, $document);
                 $this->assignComputedProperty($computer, $data, $value);
             }
 
@@ -125,7 +130,7 @@ class Extractor
     /**
      * @param array<mixed> $data
      */
-    private function extractDataFromResource(\App\Client\WebToElasticms\Config\Document $document, WebResource $resource, array &$data): void
+    private function extractDataFromResource(WebDocument $document, WebResource $resource, array &$data): void
     {
         $result = $this->cache->get($resource->getUrl());
         $analyzer = $this->config->getAnalyzer($resource->getType());
@@ -159,14 +164,15 @@ class Extractor
      *
      * @return mixed
      */
-    private function compute(Computer $computer, array &$data)
+    private function compute(Computer $computer, array &$data, WebDocument $document)
     {
         $value = $this->expressionLanguage->evaluate($computer->getExpression(), $context = [
             'data' => new ExpressionData($data),
+            'document' => $document,
         ]);
 
         if ($computer->isJsonDecode() && \is_string($value)) {
-            if ('null' === \trim($value)) {
+            if (\in_array(\trim($value), ['null', ''])) {
                 return null;
             }
 
@@ -190,5 +196,21 @@ class Extractor
     public function reset(): void
     {
         $this->config->setLastUpdated(null);
+    }
+
+    private function hashFromResources(WebDocument $document): string
+    {
+        $hashContext = \hash_init('sha1');
+        foreach ($document->getResources() as $resource) {
+            $handler = $this->cache->get($resource->getUrl())->getStream();
+            if (0 !== $handler->tell()) {
+                $handler->rewind();
+            }
+            while (!$handler->eof()) {
+                \hash_update($hashContext, $handler->read(1024 * 1024));
+            }
+        }
+
+        return \hash_final($hashContext);
     }
 }

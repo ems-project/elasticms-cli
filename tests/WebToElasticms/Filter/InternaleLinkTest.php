@@ -65,7 +65,7 @@ class InternaleLinkTest extends TestCase
             ->willReturn(["/^\/fr\/glossaire/"]);
         $crawler = new Crawler(
             '<div style="padding: inherit;"><a href="//demo.com/fr/glossaire?totot">Url</a></div>
-<div style="padding: inherit;"><a href="../../fr/glossaire">link</a></div>
+<div style="padding: inherit;"><a href="../fr/glossaire">link</a></div>
 <div style="padding: inherit;"><a href="/fr/glossaire">link</a></div>
 <div style="padding: inherit;"><a href="/autre">link</a> toto <a href="/fr/glossaire">link</a> totot</div>');
         $internalLink = new InternalLink($logger, $config, $rapport, 'https://demo.com/a/b');
