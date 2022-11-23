@@ -147,7 +147,7 @@ class Extractor
     /**
      * @param array<mixed> $data
      */
-    private function condition(Computer $computer, array &$data, ConfigDocument $document): bool
+    private function condition(Computer $computer, array &$data, WebDocument $document): bool
     {
         $condition = $this->expressionLanguage->evaluate($computer->getCondition(), $context = [
             'data' => new ExpressionData($data),

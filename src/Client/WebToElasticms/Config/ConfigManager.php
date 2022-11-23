@@ -418,6 +418,8 @@ class ConfigManager
             return \sprintf('((null === %1$s) ? null : \\App\\ExpressionLanguage\\Functions::pa11y(%1$s))', $url);
         }, function ($arguments, $url) {
             return (null === $url) ? null : \App\ExpressionLanguage\Functions::pa11y($url);
+        });
+
         $this->expressionLanguage->register('split', function ($pattern, $str, $limit = -1, $flags = PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) {
             return \sprintf('((null === %1$s || null === %2$s) ? null : \\preg_split(%1$s, %2$s, %3$d, %4$d))', $pattern, $str, $limit, $flags);
         }, function ($arguments, $pattern, $str, $limit = -1, $flags = PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) {

@@ -101,7 +101,7 @@ class Functions
         $wrapper->start();
 
         return $wrapper->getOutput();
-     }
+    }
 
     /**
      * @param array<string, string[]> $values,
