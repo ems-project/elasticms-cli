@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Client\WebToElasticms\Filter\Html;
 
 use App\Client\WebToElasticms\Config\WebResource;

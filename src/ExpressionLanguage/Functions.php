@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\ExpressionLanguage;
 
+use App\Helper\Pa11yWrapper;
 use EMS\CommonBundle\Common\Standard\Json;
 use Ramsey\Uuid\Uuid;
 
@@ -90,5 +93,13 @@ class Functions
         }
 
         return $body;
+    }
+
+    public static function pa11y(string $url): string
+    {
+        $wrapper = new Pa11yWrapper($url);
+        $wrapper->start();
+
+        return $wrapper->getOutput();
     }
 }

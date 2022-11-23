@@ -225,7 +225,7 @@ class ConfigManager
         $this->validClasses = $validClasses;
     }
 
-    private function findInDocuments(Url $url): ?string
+    public function findInDocuments(Url $url): ?string
     {
         foreach ($this->documents as $document) {
             $ouuid = $document->getOuuid();
@@ -262,7 +262,7 @@ class ConfigManager
     {
         $asset = $this->cacheManager->get($url->getUrl());
         $mimeType = $asset->getMimetype();
-        if (200 != $asset->getResponse()->getStatusCode() || false !== \strpos($mimeType, 'text/html')) {
+        if (200 != $asset->getResponse()->getStatusCode() || $asset->isHtml()) {
             return [];
         }
         $filename = $url->getFilename();
@@ -379,6 +379,12 @@ class ConfigManager
             return \sprintf('((null === %1$s || null === %2$s || null === %3$s || null === %4$s || null === %5$s) ? null : \\App\\ExpressionLanguage\\Functions::domToJsonMenu(%1$s, %2$s, %3$s, %4$s, %5$s))', $html, $tag, $fieldName, $typeName, $labelField);
         }, function ($arguments, $html, $tag, $fieldName, $typeName, $labelField) {
             return (null === $html || null === $tag || null === $fieldName || null === $typeName || null === $labelField) ? null : \App\ExpressionLanguage\Functions::domToJsonMenu($html, $tag, $fieldName, $typeName, $labelField);
+        });
+
+        $this->expressionLanguage->register('pa11y', function ($url) {
+            return \sprintf('((null === %1$s) ? null : \\App\\ExpressionLanguage\\Functions::pa11y(%1$s))', $url);
+        }, function ($arguments, $url) {
+            return (null === $url) ? null : \App\ExpressionLanguage\Functions::pa11y($url);
         });
 
         return $this->expressionLanguage;

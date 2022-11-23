@@ -185,6 +185,7 @@ Functions available:
  - `json_escape(str)`: JSON escape a string 
  - `date(format, timestamp)`: Format a date 
  - `strtotime(str)`: Convert a string into a date 
+ - `pa11y(url)`: Use the Pa11y npm package to accessibility audit the url. Returns a json string 
  - `dom_to_json_menu(html, tag, fieldName, typeName, labelField)`: Convert an HTML/WYSIWYG string into a JSON nested menu
    - `html`: The HTML string to convert
    - `tag`: Will split into item each time that this tag is meet. The text value will be used as item's label
@@ -195,4 +196,5 @@ Functions available:
 
 Variable available
  - `data` an instance of [ExpressionData](src/Client/WebToElasticms/Helper/ExpressionData.php)
+ - `document` an instance of [Document](src/Client/WebToElasticms/Config/Document.php)
 

@@ -48,7 +48,7 @@ final class DocumentUpdateCommand extends AbstractCommand
     protected function configure(): void
     {
         $this
-            ->setDescription('Update documents form excel or csv with custom configuration')
+            ->setDescription('Update documents from excel or csv file with custom configuration')
             ->addArgument(self::ARGUMENT_CONFIG_FILE, InputArgument::REQUIRED, 'Config file (json)')
             ->addArgument(self::ARGUMENT_DATA_FILE, InputArgument::REQUIRED, 'Data file (excel or csv)')
             ->addOption(self::OPTION_DATA_OFFSET, null, InputOption::VALUE_REQUIRED, 'Offset data', 0)
