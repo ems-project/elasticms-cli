@@ -166,7 +166,7 @@ class Html
                     if (!\is_string($content)) {
                         throw new \RuntimeException(\sprintf('Unexpected non string content for filter %s', Src::TYPE));
                     }
-                    $filter = new Src($this->logger, $this->config, $resource->getUrl());
+                    $filter = new Src($this->logger, $this->config, $resource->getUrl(), $this->rapport);
                     $content = $filter->process($content);
                     break;
                 case DataLink::TYPE:

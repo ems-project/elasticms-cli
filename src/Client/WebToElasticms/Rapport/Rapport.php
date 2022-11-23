@@ -22,11 +22,14 @@ class Rapport
     /** @var string[][] */
     private array $extractErrors = [['Type', 'URL', 'Locale', 'Selector', 'Strategy', 'Property', 'Attribute', 'Count']];
     /** @var string[][] */
-    private array $urlsInError = [['Doc\'s URLs', 'URLs', 'Code', 'Message']];
+    private array $urlsInError = [['Doc\'s URLs', 'URLs', 'Code', 'Message', 'Type']];
     /** @var string[][] */
     private array $dataLinksInError = [['Path', 'Referrers']];
     /** @var string[][] */
+    private array $assetsInError = [['Path', 'Referrers']];
+    /** @var string[][] */
     private array $updatedDocuments = [['CRUD', 'Content Type', 'OUUID', 'Locale', 'URL']];
+
     private string $filename;
     private SpreadsheetGeneratorService $spreadsheetGeneratorService;
     private CacheManager $cacheManager;
@@ -66,6 +69,10 @@ class Rapport
                     'rows' => \array_values($this->dataLinksInError),
                 ],
                 [
+                    'name' => 'Asset in error',
+                    'rows' => \array_values($this->assetsInError),
+                ],
+                [
                     'name' => 'Updated documents',
                     'rows' => \array_values($this->updatedDocuments),
                 ],
@@ -89,15 +96,20 @@ class Rapport
         $this->dataLinksInError[] = [$path, $currentUrl];
     }
 
+    public function inAssetsError(string $path, ?string $currentUrl): void
+    {
+        $this->assetsInError[] = [$path, $currentUrl ?? 'null'];
+    }
+
     public function addUrlNotFound(Url $url): void
     {
         $urlReport = $this->cacheManager->testUrl($url);
         $this->missingInternalUrls[$url->getPath()] = [$url->getPath(), $url->getUrl(), \strval($urlReport->getStatusCode()), $urlReport->getMessage() ?? '', $url->getReferer() ?? 'N/A'];
     }
 
-    public function addResourceInError(WebResource $resource, Url $url, int $code, string $message): void
+    public function addResourceInError(WebResource $resource, Url $url, int $code, string $message, string $type = 'import'): void
     {
-        $this->urlsInError[] = [$resource->getUrl(), $url->getUrl(), \strval($code), $message];
+        $this->urlsInError[] = [$resource->getUrl(), $url->getUrl(), \strval($code), $message, $type];
     }
 
     public function addNothingExtracted(Document $document): void

@@ -108,7 +108,7 @@ class Extractor
 
             $type = $this->config->getType($document->getType());
             foreach ($type->getComputers() as $computer) {
-                if (!$this->condition($computer, $data)) {
+                if (!$this->condition($computer, $data, $document)) {
                     continue;
                 }
                 $value = $this->compute($computer, $data, $document);
@@ -147,10 +147,11 @@ class Extractor
     /**
      * @param array<mixed> $data
      */
-    private function condition(Computer $computer, array &$data): bool
+    private function condition(Computer $computer, array &$data, ConfigDocument $document): bool
     {
         $condition = $this->expressionLanguage->evaluate($computer->getCondition(), $context = [
             'data' => new ExpressionData($data),
+            'document' => $document,
         ]);
         if (!\is_bool($condition)) {
             throw new \RuntimeException(\sprintf('Condition "%s" must return a boolean', $computer->getCondition()));

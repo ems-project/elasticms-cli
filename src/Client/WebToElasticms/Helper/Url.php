@@ -115,7 +115,7 @@ class Url
             }
         }
 
-        if ('.' === \substr($path, 0, 1)) {
+        if ('/' !== \substr($path, 0, 1)) {
             $path = $relativeToPath.$path;
         }
         $patterns = ['#(/\.?/)#', '#/(?!\.\.)[^/]+/\.\./#'];

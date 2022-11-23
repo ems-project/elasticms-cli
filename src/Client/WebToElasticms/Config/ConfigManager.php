@@ -7,6 +7,7 @@ namespace App\Client\WebToElasticms\Config;
 use App\Client\HttpClient\CacheManager;
 use App\Client\WebToElasticms\Helper\Url;
 use App\Client\WebToElasticms\Rapport\Rapport;
+use EMS\CommonBundle\Contracts\CoreApi\CoreApiExceptionInterface;
 use EMS\CommonBundle\Contracts\CoreApi\CoreApiInterface;
 use EMS\CommonBundle\Helper\EmsFields;
 use Psr\Log\LoggerInterface;
@@ -175,7 +176,7 @@ class ConfigManager
 
         $path = $this->findInDocuments($url);
         if (null === $path) {
-            $path = $this->downloadAsset($url);
+            $path = $this->downloadAsset($url, $rapport);
         }
         if (null === $path) {
             $path = $url->getPath();
@@ -207,6 +208,32 @@ class ConfigManager
         $rapport->inDataLinkNotFounds($path, $currentUrl);
 
         return '';
+    }
+
+    /**
+     * @param string[] $paths
+     *
+     * @return string[]
+     */
+    public function findDataLinksArray(array $paths, string $type = ''): array
+    {
+        $results = [];
+        foreach ($paths as $path) {
+            if (!empty($type) && isset($this->datalinksByUrl[$type][$path])) {
+                $results[] = $this->datalinksByUrl[$type][$path];
+            }
+        }
+
+        return $results;
+    }
+
+    public function findDataLinkString(string $path, string $type = ''): ?string
+    {
+        if (!empty($type) && isset($this->datalinksByUrl[$type][$path])) {
+            return $this->datalinksByUrl[$type][$path];
+        }
+
+        return null;
     }
 
     /**
@@ -258,7 +285,7 @@ class ConfigManager
     /**
      * @return array{filename: string, filesize: int|null, mimetype: string, sha1: string}|array{}
      */
-    public function urlToAssetArray(Url $url): array
+    public function urlToAssetArray(Url $url, Rapport $rapport): array
     {
         $asset = $this->cacheManager->get($url->getUrl());
         $mimeType = $asset->getMimetype();
@@ -268,8 +295,13 @@ class ConfigManager
         $filename = $url->getFilename();
         $stream = $asset->getStream();
         $stream->seek(0);
-        $hash = $this->coreApi->file()->uploadStream($stream, $filename, $mimeType);
+        try {
+            $hash = $this->coreApi->file()->uploadStream($stream, $filename, $mimeType);
+        } catch (CoreApiExceptionInterface $e) {
+            $rapport->inAssetsError($url->getUrl(), $url->getReferer());
 
+            return [];
+        }
         if (0 === \strlen($hash)) {
             throw new \RuntimeException('Unexpected empty hash');
         }
@@ -282,9 +314,10 @@ class ConfigManager
         ];
     }
 
-    private function downloadAsset(Url $url): ?string
+    private function downloadAsset(Url $url, Rapport $rapport): ?string
     {
-        $assetArray = $this->urlToAssetArray($url);
+        $assetArray = $this->urlToAssetArray($url, $rapport);
+
         if (empty($assetArray)) {
             return null;
         }
@@ -385,6 +418,22 @@ class ConfigManager
             return \sprintf('((null === %1$s) ? null : \\App\\ExpressionLanguage\\Functions::pa11y(%1$s))', $url);
         }, function ($arguments, $url) {
             return (null === $url) ? null : \App\ExpressionLanguage\Functions::pa11y($url);
+        $this->expressionLanguage->register('split', function ($pattern, $str, $limit = -1, $flags = PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) {
+            return \sprintf('((null === %1$s || null === %2$s) ? null : \\preg_split(%1$s, %2$s, %3$d, %4$d))', $pattern, $str, $limit, $flags);
+        }, function ($arguments, $pattern, $str, $limit = -1, $flags = PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) {
+            return (null === $pattern || null === $str) ? null : \preg_split($pattern, $str, $limit, $flags);
+        });
+
+        $this->expressionLanguage->register('datalinks', function ($value, $type) {
+            return \sprintf('((null === %1$s || null === %2$s) ? null : (is_array($value) ? \\$this->findDataLinksArray(%1$s, %2$s): $this->findDataLinkString(%1$s, %2$s)))', \strval($value), $type);
+        }, function ($arguments, $value, $type) {
+            return (null === $value || null === $type) ? null : (\is_array($value) ? $this->findDataLinksArray($value, $type) : $this->findDataLinkString($value, $type));
+        });
+
+        $this->expressionLanguage->register('list_to_json_menu_nested', function ($values, $fieldName, $typeName, $labels = null, $labelField = null, $multiplex = false) {
+            return \sprintf('((null === %1$s || null === %2$s || null === %3$s) ? null : \\App\\ExpressionLanguage\\Functions::listToJsonMenuNested(%1$s, %2$s, %3$s, %4$s, %5$s, %6$s))', \strval($values), $fieldName, $typeName, \strval($labels), $labelField, \strval($multiplex));
+        }, function ($arguments, $values, $fieldName, $typeName, $labels = null, $labelField = null, $multiplex = false) {
+            return (null === $values || null === $fieldName || null === $typeName) ? null : \App\ExpressionLanguage\Functions::listToJsonMenuNested($values, $fieldName, $typeName, $labels, $labelField, $multiplex);
         });
 
         return $this->expressionLanguage;
