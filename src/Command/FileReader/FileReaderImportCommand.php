@@ -84,7 +84,7 @@ final class FileReaderImportCommand extends AbstractCommand
 
         $expressionLanguage = new ExpressionLanguage();
         $rows = $this->fileReader->getData($file, false, $this->encoding);
-        $header = \array_map('trim', $rows[0] ?? []);
+        $header = \array_filter(\array_map('trim', $rows[0] ?? []));
 
         $ouuids = [];
         if ($this->deleteMissingDocuments) {
@@ -107,6 +107,9 @@ final class FileReaderImportCommand extends AbstractCommand
             $row = [];
             $empty = true;
             foreach ($rowValues as $cellKey => $cell) {
+                if (null === ($header[$cellKey] ?? null) && null === $cell) {
+                    continue;
+                }
                 $row[$header[$cellKey] ?? $cellKey] = $cell;
                 $empty = $empty && (null === $cell);
             }
