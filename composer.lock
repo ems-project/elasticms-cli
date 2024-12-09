@@ -1752,16 +1752,16 @@
         },
         {
             "name": "elasticms/common-bundle",
-            "version": "5.24.1",
+            "version": "5.24.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ems-project/EMSCommonBundle.git",
-                "reference": "1a7a2d7d99bee906575129c640a08f78c7041175"
+                "reference": "00313801d80bbec334e2f59257c3fe6d7cc696e2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ems-project/EMSCommonBundle/zipball/1a7a2d7d99bee906575129c640a08f78c7041175",
-                "reference": "1a7a2d7d99bee906575129c640a08f78c7041175",
+                "url": "https://api.github.com/repos/ems-project/EMSCommonBundle/zipball/00313801d80bbec334e2f59257c3fe6d7cc696e2",
+                "reference": "00313801d80bbec334e2f59257c3fe6d7cc696e2",
                 "shasum": ""
             },
             "require": {
@@ -1839,22 +1839,22 @@
                 "elasticms"
             ],
             "support": {
-                "source": "https://github.com/ems-project/EMSCommonBundle/tree/5.24.1"
+                "source": "https://github.com/ems-project/EMSCommonBundle/tree/5.24.2"
             },
-            "time": "2024-11-29T12:46:08+00:00"
+            "time": "2024-12-09T09:10:20+00:00"
         },
         {
             "name": "elasticms/helpers",
-            "version": "5.24.1",
+            "version": "5.24.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ems-project/helpers.git",
-                "reference": "bf0ccdfc7706cf108581c3815d83c8b296b92d8b"
+                "reference": "ee159591e7277b7223293cb95489c87affabb9cd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ems-project/helpers/zipball/bf0ccdfc7706cf108581c3815d83c8b296b92d8b",
-                "reference": "bf0ccdfc7706cf108581c3815d83c8b296b92d8b",
+                "url": "https://api.github.com/repos/ems-project/helpers/zipball/ee159591e7277b7223293cb95489c87affabb9cd",
+                "reference": "ee159591e7277b7223293cb95489c87affabb9cd",
                 "shasum": ""
             },
             "require": {
@@ -1901,9 +1901,9 @@
                 "php"
             ],
             "support": {
-                "source": "https://github.com/ems-project/helpers/tree/5.24.1"
+                "source": "https://github.com/ems-project/helpers/tree/5.24.2"
             },
-            "time": "2024-11-29T12:46:08+00:00"
+            "time": "2024-12-09T10:02:38+00:00"
         },
         {
             "name": "elasticsearch/elasticsearch",
