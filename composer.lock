@@ -1752,16 +1752,16 @@
         },
         {
             "name": "elasticms/common-bundle",
-            "version": "5.24.4",
+            "version": "5.24.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ems-project/EMSCommonBundle.git",
-                "reference": "ec55c155a6461700f6549b18b315765cc92902a0"
+                "reference": "0f51cc10d40bf6bf780b59f53445962a87332e6d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ems-project/EMSCommonBundle/zipball/ec55c155a6461700f6549b18b315765cc92902a0",
-                "reference": "ec55c155a6461700f6549b18b315765cc92902a0",
+                "url": "https://api.github.com/repos/ems-project/EMSCommonBundle/zipball/0f51cc10d40bf6bf780b59f53445962a87332e6d",
+                "reference": "0f51cc10d40bf6bf780b59f53445962a87332e6d",
                 "shasum": ""
             },
             "require": {
@@ -1839,13 +1839,13 @@
                 "elasticms"
             ],
             "support": {
-                "source": "https://github.com/ems-project/EMSCommonBundle/tree/5.24.4"
+                "source": "https://github.com/ems-project/EMSCommonBundle/tree/5.24.5"
             },
-            "time": "2024-12-19T09:28:39+00:00"
+            "time": "2025-01-10T22:53:36+00:00"
         },
         {
             "name": "elasticms/helpers",
-            "version": "5.24.4",
+            "version": "5.24.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ems-project/helpers.git",
@@ -1901,7 +1901,7 @@
                 "php"
             ],
             "support": {
-                "source": "https://github.com/ems-project/helpers/tree/5.24.4"
+                "source": "https://github.com/ems-project/helpers/tree/5.24.5"
             },
             "time": "2024-12-19T09:33:00+00:00"
         },
@@ -11532,7 +11532,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -11542,6 +11542,6 @@
         "ext-json": "*",
         "ext-sqlite3": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }
